@@ -1,0 +1,116 @@
+/// A lightweight logging facade that fans each log call out to one or more destinations.
+///
+/// Create one shared ``Log`` near your app's composition root and inject it through
+/// your app, package, or server dependencies. ``Log`` intentionally stays small:
+/// destinations decide where output goes and how structured records are formatted,
+/// while ``Log`` gives call-sites consistent plain and structured logging APIs.
+public struct Log {
+	/// The destinations that receive every log call.
+	///
+	/// Use multiple destinations when the same event should go to different places,
+	/// such as the system console and an in-memory support-log buffer.
+	public let destinations: [any LoggingDestination]
+
+	/// Creates a logger that writes to each destination in order.
+	public init(destinations: [any LoggingDestination]) {
+		self.destinations = destinations
+	}
+
+	/// Logs one or more values.
+	///
+	/// Prefer this variadic form for multiple values, such as `log.debug("Created", "Reminder", 3)`.
+	/// Passing an array, such as `log.debug([a, b, c])`, intentionally logs that array
+	/// as one value, matching the way Swift's `print` treats array arguments.
+	public func debug(_ values: Any...) {
+		self.performLoggingOperation({ $0.debug(values) })
+	}
+
+	public func debug() {
+		self.performLoggingOperation({ $0.debug() })
+	}
+
+	/// Logs one or more values.
+	///
+	/// Prefer this variadic form for multiple values, such as `log.info("Created", "Reminder", 3)`.
+	/// Passing an array, such as `log.info([a, b, c])`, intentionally logs that array
+	/// as one value, matching the way Swift's `print` treats array arguments.
+	public func info(_ values: Any...) {
+		self.performLoggingOperation({ $0.info(values) })
+	}
+
+	public func info() {
+		self.performLoggingOperation({ $0.info() })
+	}
+
+	/// Logs one or more values.
+	///
+	/// Prefer this variadic form for multiple values, such as `log.warn("Created", "Reminder", 3)`.
+	/// Passing an array, such as `log.warn([a, b, c])`, intentionally logs that array
+	/// as one value, matching the way Swift's `print` treats array arguments.
+	public func warn(_ values: Any...) {
+		self.performLoggingOperation({ $0.warn(values) })
+	}
+
+	public func warn() {
+		self.performLoggingOperation({ $0.warn() })
+	}
+
+	/// Logs one or more values.
+	///
+	/// Prefer this variadic form for multiple values, such as `log.error("Created", "Reminder", 3)`.
+	/// Passing an array, such as `log.error([a, b, c])`, intentionally logs that array
+	/// as one value, matching the way Swift's `print` treats array arguments.
+	public func error(_ values: Any...) {
+		self.performLoggingOperation({ $0.error(values) })
+	}
+
+	public func error() {
+		self.performLoggingOperation({ $0.error() })
+	}
+
+	/// Logs one or more values.
+	///
+	/// Prefer this variadic form for multiple values, such as `log.fault("Created", "Reminder", 3)`.
+	/// Passing an array, such as `log.fault([a, b, c])`, intentionally logs that array
+	/// as one value, matching the way Swift's `print` treats array arguments.
+	public func fault(_ values: Any...) {
+		self.performLoggingOperation({ $0.fault(values) })
+	}
+
+	public func fault() {
+		self.performLoggingOperation({ $0.fault() })
+	}
+}
+
+public extension Log {
+	/// Broadcast's shared in-memory logger for the current process.
+	///
+	/// Prefer creating and injecting your own ``SessionLogger`` when you need explicit
+	/// lifetime control, deterministic tests, or multiple independently exported buffers.
+	static let sessionLogger = SessionLogger()
+
+	/// Broadcast's shared OSLog-backed console destination.
+	///
+	/// Prefer creating your own ``ConsoleLogger`` with your app's subsystem and category
+	/// for production integrations.
+	static let consoleLogger = ConsoleLogger(subsystem: "com.mergesort.broadcast", category: "logs")
+
+	/// A convenience logger that writes to Broadcast's default console and session destinations.
+	///
+	/// This is useful for quick integration or examples. Apps with dependency injection,
+	/// support-log export, or privacy-specific routing should construct their own ``Log``.
+	static let `default` = Log(
+		destinations: [
+			Log.consoleLogger,
+			Log.sessionLogger
+		]
+	)
+}
+
+extension Log {
+	func performLoggingOperation(_ operation: (any LoggingDestination) -> Void) {
+		for destination in self.destinations {
+			operation(destination)
+		}
+	}
+}
