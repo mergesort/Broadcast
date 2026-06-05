@@ -131,6 +131,25 @@ struct MultiSessionLoggerTests {
 
 		#expect(logger.logs(count: 2) == "[Info] @ 3 | Third\n[Info] @ 2 | Second")
 	}
+
+	@Test
+	func removesAllBufferedAndPersistedLogs() async throws {
+		let store = try await Store<Log.Record>(
+			storage: SQLiteStorageEngine(directory: .temporary(appendingPath: "BroadcastTests_\(UUID().uuidString)"))!
+		)
+		let logger = MultiSessionLogger(store: store)
+
+		logger.info("First")
+		logger.info("Second")
+		await logger.removeAll()
+
+		let restoredLogger = MultiSessionLogger(store: store)
+		await restoredLogger.flush()
+
+		#expect(logger.records().isEmpty)
+		#expect(logger.logs().isEmpty)
+		#expect(restoredLogger.records().isEmpty)
+	}
 }
 
 // MARK: Private

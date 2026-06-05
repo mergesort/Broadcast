@@ -55,6 +55,20 @@ extension MultiSessionLogger {
 	func flush() async {
 		await self.currentPendingStorageWrite()?.value
 	}
+
+	public func removeAll() async {
+		await self.currentPendingStorageWrite()?.value
+
+		self.recordStorage.withLock {
+			$0.removeAll()
+		}
+
+		self.enqueueStorageWrite { [storage] in
+			await storage.removeAll()
+		}
+
+		await self.currentPendingStorageWrite()?.value
+	}
 }
 
 // MARK: Private
@@ -118,5 +132,9 @@ private final class MultiSessionLogStorage {
 
 	func append(_ record: Log.Record) async {
 		try? await self.$records.insert(record)
+	}
+
+	func removeAll() async {
+		try? await self.$records.removeAll()
 	}
 }

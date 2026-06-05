@@ -33,6 +33,11 @@ public final class SessionLogger: BufferedLoggingDestination {
 	public func records() -> [Log.Record] {
 		self.storage.records()
 	}
+
+	/// Removes all records captured during this process.
+	public func removeAll() {
+		self.storage.removeAll()
+	}
 }
 
 // MARK: SessionLogStorage
@@ -49,6 +54,12 @@ private final class SessionLogStorage: Sendable {
 	func records() -> [Log.Record] {
 		self.recordStorage.withLock {
 			$0
+		}
+	}
+
+	func removeAll() {
+		self.recordStorage.withLock {
+			$0.removeAll()
 		}
 	}
 }

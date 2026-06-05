@@ -57,6 +57,18 @@ struct SessionLoggerTests {
 	}
 
 	@Test
+	func removesAllBufferedLogs() {
+		let logger = SessionLogger()
+
+		logger.info("First")
+		logger.info("Second")
+		logger.removeAll()
+
+		#expect(logger.records().isEmpty)
+		#expect(logger.logs().isEmpty)
+	}
+
+	@Test
 	func formatsArrayAsSingleValueThroughLog() {
 		let logger = SessionLogger(
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
