@@ -17,7 +17,7 @@ struct DemoLoggers {
 	let auditLog: Log
 
 	init() {
-		let consoleLogger = ConsoleLogger(subsystem: "com.mergesort.BroadcastDemo", category: "operations")
+		let consoleLogger = DemoConsoleLogger(subsystem: "com.mergesort.BroadcastDemo", category: "operations")
 		let liveLogger = SessionLogger()
 		let metricsLogger = SessionLogger(timestampFormatStyle: .timestamp)
 		let auditLogger = AuditLogger(limit: 5000)

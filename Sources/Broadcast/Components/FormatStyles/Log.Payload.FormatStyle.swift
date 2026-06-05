@@ -20,7 +20,11 @@ public extension Log.Payload {
 		public init() {}
 
 		public func format(_ value: Log.Payload) -> String {
-			"\(value.key)=\(value.value.formatted(.logPayloadValue))"
+			Log.Record.KeyValuePair(
+				key: value.key,
+				value: value.value.formatted(.logPayloadValue)
+			)
+			.formatted(.raw)
 		}
 	}
 }

@@ -2,7 +2,7 @@ import Foundation
 
 extension Log.Record {
 	struct TokenOptimizedRepresentation {
-		let fields: [TokenOptimizedField]
+		let fields: [KeyValuePair]
 
 		init(record: Log.Record) {
 			self.fields = Self.fields(for: record)
@@ -10,7 +10,7 @@ extension Log.Record {
 
 		func formatted() -> String {
 			self.fields
-				.map({ $0.formatted() })
+				.map({ $0.formatted(.tokenOptimized) })
 				.joined(separator: " ")
 		}
 	}
@@ -19,28 +19,28 @@ extension Log.Record {
 // MARK: Private
 
 private extension Log.Record.TokenOptimizedRepresentation {
-	static func fields(for record: Log.Record) -> [Log.Record.TokenOptimizedField] {
+	static func fields(for record: Log.Record) -> [Log.Record.KeyValuePair] {
 		var fields = [
-			Log.Record.TokenOptimizedField(key: "t", value: Self.millisecondsSince1970(for: record.timestamp.date)),
-			Log.Record.TokenOptimizedField(key: "l", value: record.level.rawValue)
+			Log.Record.KeyValuePair(key: "t", value: Self.millisecondsSince1970(for: record.timestamp.date)),
+			Log.Record.KeyValuePair(key: "l", value: record.level.rawValue)
 		]
 
 		if let signal = record.signal {
-			fields.append(Log.Record.TokenOptimizedField(key: "s", value: signal.identifier))
+			fields.append(Log.Record.KeyValuePair(key: "s", value: signal.identifier))
 		}
 
 		if let category = record.category {
-			fields.append(Log.Record.TokenOptimizedField(key: "c", value: category.identifier))
+			fields.append(Log.Record.KeyValuePair(key: "c", value: category.identifier))
 		}
 
 		if !record.message.isEmpty {
-			fields.append(Log.Record.TokenOptimizedField(key: "m", value: record.message))
+			fields.append(Log.Record.KeyValuePair(key: "m", value: record.message))
 		}
 
 		fields.append(
 			contentsOf: record.payload.map { payload in
-				Log.Record.TokenOptimizedField(
-					key: "p.\(Log.Record.KeyValueFieldFormatter.canonicalKey(payload.key))",
+				Log.Record.KeyValuePair(
+					key: "p.\(payload.key.isEmpty ? "payload" : payload.key)",
 					value: payload.value.formatted(.tokenOptimizedPayloadValue)
 				)
 			}
@@ -57,19 +57,6 @@ extension Log.Record.TokenOptimizedRepresentation {
 		let milliseconds = (date.timeIntervalSince1970 * 1000).rounded(.toNearestOrAwayFromZero)
 
 		return String(Int64(milliseconds))
-	}
-}
-
-// MARK: Log.Record.TokenOptimizedField
-
-extension Log.Record {
-	struct TokenOptimizedField {
-		let key: String
-		let value: String
-
-		func formatted() -> String {
-			"\(self.key)=\(Log.Record.KeyValueFieldFormatter.value(self.value, escapingControlCharacters: true))"
-		}
 	}
 }
 

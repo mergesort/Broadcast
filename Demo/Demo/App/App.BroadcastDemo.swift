@@ -17,7 +17,7 @@ import SwiftUI
 ///    composition root, used from call sites as `log.info(...)`.
 /// 3. `Logging/DemoLoggers.swift` is the logger graph. It wires Broadcast
 ///    destinations together:
-///    - `ConsoleLogger` writes canonical log lines to OSLog.
+///    - `DemoConsoleLogger` writes canonical log lines to OSLog.
 ///    - `SessionLogger` powers the live in-app feed.
 ///    - `SessionLogger(timestampFormatStyle: .timestamp)` powers the metrics feed.
 ///    - `AuditLogger` wraps `MultiSessionLogger` for persisted audit
@@ -33,7 +33,8 @@ import SwiftUI
 ///    strings and ad-hoc payload keys through feature code.
 /// 6. `Logging/LogExport.swift` and the Copy/Share buttons show the formatter story.
 ///    The same semantic `Log.Record` values can be exported as Broadcast's default
-///    text format, Stripe-style canonical log lines, or structured JSON.
+///    text format, structured JSON, token-optimized lines for prompt-friendly
+///    diagnostics, or Stripe-style canonical log lines.
 /// 7. `Sources/Broadcast/Components/FormatStyles/` contains the library-side
 ///    formatter implementations that make those export choices possible.
 ///

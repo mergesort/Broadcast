@@ -3,7 +3,7 @@ import Foundation
 extension Log.Record {
 	struct CanonicalLogLineRepresentation {
 		let timestamp: String
-		let fields: [CanonicalLogLineField]
+		let fields: [KeyValuePair]
 
 		init(record: Log.Record, timestampFormatStyle: Log.Timestamp.FormatStyle) {
 			self.timestamp = record.timestamp.formatted(timestampFormatStyle)
@@ -12,7 +12,7 @@ extension Log.Record {
 
 		func formatted() -> String {
 			let fields = self.fields
-				.map({ $0.formatted() })
+				.map({ $0.formatted(.normalized) })
 				.joined(separator: " ")
 
 			return "[\(self.timestamp)] canonical-log-line \(fields)"
@@ -23,26 +23,26 @@ extension Log.Record {
 // MARK: Private
 
 private extension Log.Record.CanonicalLogLineRepresentation {
-	static func fields(for record: Log.Record) -> [Log.Record.CanonicalLogLineField] {
+	static func fields(for record: Log.Record) -> [Log.Record.KeyValuePair] {
 		var fields = [
-			Log.Record.CanonicalLogLineField(key: "level", value: record.level.rawValue)
+			Log.Record.KeyValuePair(key: "level", value: record.level.rawValue)
 		]
 
 		if let signal = record.signal {
-			fields.append(Log.Record.CanonicalLogLineField(key: "signal", value: signal.identifier))
+			fields.append(Log.Record.KeyValuePair(key: "signal", value: signal.identifier))
 		}
 
 		if let category = record.category {
-			fields.append(Log.Record.CanonicalLogLineField(key: "category", value: category.identifier))
+			fields.append(Log.Record.KeyValuePair(key: "category", value: category.identifier))
 		}
 
 		if !record.message.isEmpty {
-			fields.append(Log.Record.CanonicalLogLineField(key: "message", value: record.message))
+			fields.append(Log.Record.KeyValuePair(key: "message", value: record.message))
 		}
 
 		fields.append(
 			contentsOf: record.payload.map { payload in
-				Log.Record.CanonicalLogLineField(
+				Log.Record.KeyValuePair(
 					key: payload.key,
 					value: payload.value.formatted(.logPayloadValue)
 				)
@@ -50,18 +50,5 @@ private extension Log.Record.CanonicalLogLineRepresentation {
 		)
 
 		return fields
-	}
-}
-
-// MARK: Log.Record.CanonicalLogLineField
-
-extension Log.Record {
-	struct CanonicalLogLineField {
-		let key: String
-		let value: String
-
-		func formatted() -> String {
-			"\(Log.Record.KeyValueFieldFormatter.canonicalKey(self.key))=\(Log.Record.KeyValueFieldFormatter.value(self.value))"
-		}
 	}
 }
