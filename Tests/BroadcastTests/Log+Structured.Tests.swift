@@ -21,6 +21,239 @@ struct StructuredLogTests {
 	}
 
 	@Test
+	func formatsRecordWithCanonicalLogLineFormatStyle() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
+			level: .info,
+			signal: .state,
+			message: "Loaded reminders",
+			category: "Reminders",
+			payload: [
+				.init(key: "result", value: "Success"),
+				.init(key: "reminderCount", value: 3)
+			]
+		)
+
+		#expect(record.formatted(.canonicalLogLine) == "[1970-01-01T00:00:00Z] canonical-log-line level=info signal=State category=Reminders message=\"Loaded reminders\" result=Success reminderCount=3")
+	}
+
+	@Test
+	func formatsRecordWithJSONFormatStyle() throws {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
+			level: .info,
+			signal: .state,
+			message: "Loaded reminders",
+			category: "Reminders",
+			payload: [
+				.init(key: "result", value: "Success"),
+				.init(key: "reminderCount", value: 3)
+			]
+		)
+
+		let json = try parsedJSONRecord(record.formatted(.json))
+		let payload = try parsedPayload(from: json)
+
+		#expect(json["timestamp"] as? String == "1970-01-01T00:00:00Z")
+		#expect(json["level"] as? String == "info")
+		#expect(json["signal"] as? String == "State")
+		#expect(json["category"] as? String == "Reminders")
+		#expect(json["message"] as? String == "Loaded reminders")
+		#expect(payload["result"] as? String == "Success")
+		#expect((payload["reminderCount"] as? NSNumber)?.intValue == 3)
+	}
+
+	@Test
+	func formatsJSONWithTypedPayloadValues() throws {
+		let id = try #require(UUID(uuidString: "00000000-0000-4000-8000-000000000001"))
+		let url = try #require(URL(string: "https://example.com/reminders/1"))
+		let date = try Date.ISO8601FormatStyle().parse("2026-05-23T12:00:00Z")
+		let error = NSError(domain: "BroadcastTests", code: 42, userInfo: [NSLocalizedDescriptionKey: "Something failed"])
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .error,
+			signal: .diagnostic,
+			message: "Failed reminder sync",
+			category: "Sync",
+			payload: [
+				.init(key: "string", value: "hello"),
+				.init(key: "optionalString", value: nil as String?),
+				.init(key: "bool", value: true),
+				.init(key: "int", value: 42),
+				.init(key: "uuid", value: id),
+				.init(key: "optionalUUID", value: nil as UUID?),
+				.init(key: "url", value: url),
+				.init(key: "optionalURL", value: nil as URL?),
+				.init(key: "date", value: date),
+				.init(key: "optionalDate", value: nil as Date?),
+				.init(key: "error", value: error),
+				.init(key: "duration", duration: 1.25)
+			]
+		)
+
+		let output = record.formatted(.json)
+		let json = try parsedJSONRecord(output)
+		let payload = try parsedPayload(from: json)
+
+		#expect(json["timestamp"] as? String == "1970-01-01T00:00:42Z")
+		#expect(json["level"] as? String == "error")
+		#expect(json["signal"] as? String == "Diagnostic")
+		#expect(json["category"] as? String == "Sync")
+		#expect(json["message"] as? String == "Failed reminder sync")
+		#expect(payload["string"] as? String == "hello")
+		#expect(payload["optionalString"] is NSNull)
+		#expect((payload["bool"] as? NSNumber)?.boolValue == true)
+		#expect((payload["int"] as? NSNumber)?.intValue == 42)
+		#expect(payload["uuid"] as? String == "00000000-0000-4000-8000-000000000001")
+		#expect(payload["optionalUUID"] is NSNull)
+		#expect(payload["url"] as? String == "https://example.com/reminders/1")
+		#expect(payload["optionalURL"] is NSNull)
+		#expect(payload["date"] as? String == "2026-05-23T12:00:00Z")
+		#expect(payload["optionalDate"] is NSNull)
+		#expect(payload["error"] as? String == "Something failed")
+		#expect((payload["duration"] as? NSNumber)?.doubleValue == 1.25)
+		#expect(output.contains("https://example.com/reminders/1"))
+	}
+
+	@Test
+	func formatsJSONWithEscapedStrings() throws {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .error,
+			signal: .diagnostic,
+			message: "Failed \"nightly\"\nsync",
+			category: "Background\\Sync",
+			payload: [
+				.init(key: "error message", value: "Path C:\\Logs was \"missing\"")
+			]
+		)
+
+		let json = try parsedJSONRecord(record.formatted(.json))
+		let payload = try parsedPayload(from: json)
+
+		#expect(json["timestamp"] as? String == "1970-01-01T00:00:42Z")
+		#expect(json["level"] as? String == "error")
+		#expect(json["signal"] as? String == "Diagnostic")
+		#expect(json["category"] as? String == "Background\\Sync")
+		#expect(json["message"] as? String == "Failed \"nightly\"\nsync")
+		#expect(payload["error message"] as? String == "Path C:\\Logs was \"missing\"")
+	}
+
+	@Test
+	func jsonSupportsCustomTimestampStyle() throws {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			signal: .metric,
+			message: "Measured reminder sync",
+			category: "Sync",
+			payload: [.init(key: "duration", duration: 1.25)]
+		)
+
+		let style = Log.Record.FormatStyle.JSON(timestampFormatStyle: .timestamp)
+
+		let json = try parsedJSONRecord(record.formatted(style))
+		let payload = try parsedPayload(from: json)
+
+		#expect(json["timestamp"] as? String == "42")
+		#expect(json["level"] as? String == "info")
+		#expect(json["signal"] as? String == "Metric")
+		#expect(json["category"] as? String == "Sync")
+		#expect(json["message"] as? String == "Measured reminder sync")
+		#expect((payload["duration"] as? NSNumber)?.doubleValue == 1.25)
+	}
+
+	@Test
+	func jsonUsesLatestDuplicatePayloadValue() throws {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			signal: .state,
+			message: "Updated result",
+			category: "Sync",
+			payload: [
+				.init(key: "result", value: "Started"),
+				.init(key: "result", value: "Finished")
+			]
+		)
+
+		let json = try parsedJSONRecord(record.formatted(.json))
+		let payload = try parsedPayload(from: json)
+
+		#expect(payload["result"] as? String == "Finished")
+	}
+
+	@Test
+	func jsonOmitsEmptyOptionalFieldsAndFormatsBlankRecordAsEmptyString() throws {
+		let structuredRecord = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			signal: .state,
+			message: "",
+			category: "Sync"
+		)
+		let blankRecord = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			message: ""
+		)
+
+		let json = try parsedJSONRecord(structuredRecord.formatted(.json))
+
+		#expect(json["message"] == nil)
+		#expect(json["payload"] == nil)
+		#expect(blankRecord.formatted(.json) == "")
+	}
+
+	@Test
+	func formatsCanonicalLogLineWithQuotedValuesAndCanonicalKeys() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .error,
+			signal: .diagnostic,
+			message: "Failed \"nightly\" sync",
+			category: "Background Sync",
+			payload: [
+				.init(key: "error message", value: "Database path C:\\Logs was unavailable"),
+				.init(key: "retry_count", value: 2)
+			]
+		)
+
+		#expect(record.formatted(.canonicalLogLine) == "[1970-01-01T00:00:42Z] canonical-log-line level=error signal=Diagnostic category=\"Background Sync\" message=\"Failed \\\"nightly\\\" sync\" error_message=\"Database path C:\\\\Logs was unavailable\" retry_count=2")
+	}
+
+	@Test
+	func canonicalLogLineSupportsCustomTimestampStyle() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			signal: .metric,
+			message: "Measured reminder sync",
+			category: "Sync",
+			payload: [.init(key: "duration", duration: 1.25)]
+		)
+
+		let style = Log.Record.FormatStyle.CanonicalLogLine(timestampFormatStyle: .timestamp)
+
+		#expect(record.formatted(style) == "[42] canonical-log-line level=info signal=Metric category=Sync message=\"Measured reminder sync\" duration=1.25s")
+	}
+
+	@Test
+	func consoleLoggerUsesCanonicalLogLineRecordFormatter() {
+		let logger = ConsoleLogger(subsystem: "com.mergesort.BroadcastTests", category: "logs")
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
+			level: .warn,
+			signal: .event,
+			message: "Reached retry threshold",
+			category: "Notifications",
+			payload: [.init(key: "attempts", value: 3)]
+		)
+
+		#expect(logger.recordFormatter.format(record) == "[1970-01-01T00:00:00Z] canonical-log-line level=warn signal=Event category=Notifications message=\"Reached retry threshold\" attempts=3")
+	}
+
+	@Test
 	func formatsRecordWithCustomFormatStyle() {
 		let record = Log.Record(
 			level: .info,
@@ -368,6 +601,17 @@ struct StructuredLogTests {
 private func expectStructuredLog(_ actual: String?, prefix: String, suffix: String) {
 	#expect(actual?.hasPrefix(prefix) == true)
 	#expect(actual?.hasSuffix(suffix) == true)
+}
+
+private func parsedJSONRecord(_ text: String) throws -> [String: Any] {
+	let data = Data(text.utf8)
+	let object = try JSONSerialization.jsonObject(with: data)
+
+	return try #require(object as? [String: Any])
+}
+
+private func parsedPayload(from json: [String: Any]) throws -> [String: Any] {
+	try #require(json["payload"] as? [String: Any])
 }
 
 // MARK: CapturingStructuredLoggingDestination

@@ -25,6 +25,8 @@ public extension Log.Payload {
 	}
 }
 
+// MARK: FormatStyle
+
 public extension FormatStyle where Self == Log.Payload.FormatStyle {
 	/// Broadcast's default payload format.
 	static var logPayload: Self {
