@@ -483,6 +483,7 @@ struct StructuredLogTests {
 		let id = try #require(UUID(uuidString: "00000000-0000-4000-8000-000000000001"))
 
 		#expect(Log.Payload(key: "id", value: id).formatted(.logPayload) == "id=00000000-0000-4000-8000-000000000001")
+		#expect(Log.Payload(key: "error message", value: "Path C:\\Logs was missing").formatted(.logPayload) == "error message=Path C:\\Logs was missing")
 		#expect(Log.Payload.Value.bool(true).formatted(.logPayloadValue) == "true")
 	}
 

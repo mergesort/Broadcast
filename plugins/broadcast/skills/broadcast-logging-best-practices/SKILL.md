@@ -30,6 +30,7 @@ Use this skill when integrating Broadcast into a Swift project. Treat Broadcast 
 - `Log.Payload` stores typed key-value diagnostics and exposes public typed initializers so call-sites do not need to format values manually.
 - `Log.Record` is the identifiable timestamped semantic structured log value that destinations format through `recordFormatter`, which defaults to Broadcast's standard single-line format; records create a UUID and current timestamp by default.
 - `Log.Record.Formatter` is the type-erased destination-level formatter for structured `Log.Record` values.
+- Built-in `Log.Record` format styles include `.default`, `.json`, `.tokenOptimized`, and `.canonicalLogLine`.
 - `Log.DateProvider` supplies dates for buffered loggers, and `Log.Timestamp.FormatStyle` formats those dates; `Log.Timestamp` defaults to the current date and is available as `Log.Timestamp.now`, but fixed date providers are still the deterministic-test path for logger output.
 
 ## Broadcast Setup
@@ -90,6 +91,15 @@ For support-log export, keep a reference to a `BufferedLoggingDestination` and e
 ```swift
 let exportedLogs = sessionLogger.logs()
 let records = sessionLogger.records()
+```
+
+Use `records()` plus a specific record formatter when an export surface needs a
+shape other than the destination's default text output:
+
+```swift
+let promptLogs = sessionLogger.records()
+	.map({ $0.formatted(.tokenOptimized) })
+	.joined(separator: "\n")
 ```
 
 For multi-session export, use `MultiSessionLogger` only after the host app configures its persistence store. Keep persistence setup in the host app layer and pass the configured store into the logger.
@@ -174,6 +184,21 @@ let record = Log.Record(
 let text = record.formatted(.default)
 ```
 
+Broadcast ships these record formats:
+
+- `.default`: human-readable support text, e.g. `[Info | State | Reminders] @ 1970-01-01T00:00:00Z | Loaded reminders | payload=[result=Success]`.
+- `.json`: a conventional structured JSON object. Export one record per line for JSON Lines-compatible output.
+- `.tokenOptimized`: compact prompt-friendly text, e.g. `t=42125 l=info s=State c=Reminders m="Loaded reminders" p.result=Success`. It uses epoch milliseconds for the record timestamp, `p.` for payload fields, epoch-millisecond date payloads, and integer millisecond duration payloads.
+- `.canonicalLogLine`: Stripe-style canonical log line text with normalized keys and quoted values when needed, e.g. `[1970-01-01T00:00:00Z] canonical-log-line level=info signal=State category=Reminders message="Loaded reminders" result=Success`.
+
+Use the type-erased formatter conveniences when configuring destinations or export
+objects:
+
+```swift
+let formatter = Log.Record.Formatter.tokenOptimized
+let text = formatter.format(record)
+```
+
 Create a custom record formatter by defining a Swift `FormatStyle` where
 `FormatInput == Log.Record` and `FormatOutput == String`:
 
@@ -238,3 +263,12 @@ Custom record formatters may use `payload.formatted(.logPayload)` when they need
 Broadcast's default `key=value` payload rendering. Consumers can define their own
 Swift `FormatStyle` where `FormatInput == Log.Payload` when a custom record
 formatter needs a different payload shape.
+
+When modifying Broadcast itself, keep typed payload storage separate from rendered
+text fields. `Log.Payload` remains the typed semantic model. Internal text formats
+can convert rendered strings into `Log.Record.KeyValuePair` values and format those
+pairs with `Log.Record.KeyValueFormatStyle`:
+
+- `.raw` preserves the key and value text and backs default payload formatting.
+- `.normalized` normalizes keys and quotes ambiguous values for canonical log lines.
+- `.tokenOptimized` uses normalized key-value output and escapes control characters so one record stays on one physical line.
