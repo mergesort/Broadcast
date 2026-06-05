@@ -1,0 +1,37 @@
+{
+  "name": "broadcast",
+  "version": "1.0.0",
+  "description": "Skills for building with Broadcast, a Swift logging package for structured logs, buffered destinations, and multi-session log export.",
+  "author": {
+    "name": "Joe Fabisevich",
+    "url": "https://github.com/mergesort"
+  },
+  "homepage": "https://github.com/mergesort/Broadcast",
+  "repository": "https://github.com/mergesort/Broadcast",
+  "license": "MIT",
+  "keywords": [
+    "swift",
+    "logging",
+    "structured-logging",
+    "ios",
+    "macos"
+  ],
+  "interface": {
+    "displayName": "Broadcast",
+    "shortDescription": "Swift structured logging workflows.",
+    "longDescription": "Broadcast adds reusable guidance for integrating Swift structured logging with shared Log destinations, typed payloads, buffered export, and support-oriented diagnostics.",
+    "developerName": "Joe Fabisevich",
+    "category": "Coding",
+    "capabilities": [
+      "Write",
+      "Review"
+    ],
+    "defaultPrompt": [
+      "Integrate Broadcast into this Swift app.",
+      "Review this Broadcast logging setup.",
+      "Add structured logs with typed payloads."
+    ],
+    "brandColor": "#2563EB"
+  },
+  "skills": "./skills/"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "broadcast",
+  "version": "1.0.0",
+  "description": "Skills for building with Broadcast, a Swift logging package for structured logs, buffered destinations, and multi-session log export.",
+  "author": {
+    "name": "Joe Fabisevich",
+    "url": "https://github.com/mergesort"
+  },
+  "homepage": "https://github.com/mergesort/Broadcast",
+  "repository": "https://github.com/mergesort/Broadcast",
+  "license": "MIT",
+  "keywords": [
+    "swift",
+    "logging",
+    "structured-logging",
+    "ios",
+    "macos"
+  ],
+  "skills": "./skills/"
+}

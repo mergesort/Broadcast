@@ -1,0 +1,13 @@
+{
+  "name": "broadcast",
+  "owner": {
+    "name": "Joe Fabisevich"
+  },
+  "description": "Broadcast skills for Swift structured logging workflows.",
+  "plugins": [
+    {
+      "name": "broadcast",
+      "source": "./plugins/broadcast"
+    }
+  ]
+}
