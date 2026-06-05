@@ -16,7 +16,7 @@ struct CopyLogsButton: View {
 
 	var body: some View {
 		Menu {
-			ForEach(LogExport.Format.allCases) { format in
+			ForEach(LogExport.Format.menuCases) { format in
 				Button(action: {
 					self.copyLogs(format: format)
 				}, label: {

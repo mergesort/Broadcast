@@ -61,63 +61,7 @@ extension Log.Record {
 		let value: String
 
 		func formatted() -> String {
-			"\(Self.canonicalKey(key))=\(Self.canonicalValue(value))"
-		}
-	}
-}
-
-// MARK: Private
-
-private extension Log.Record.CanonicalLogLineField {
-	static func canonicalKey(_ key: String) -> String {
-		let scalars = key.unicodeScalars.map { scalar in
-			if Self.isCanonicalKeyScalar(scalar) {
-				String(scalar)
-			} else {
-				"_"
-			}
-		}
-		.joined()
-
-		if scalars.isEmpty {
-			return "payload"
-		} else {
-			return scalars
-		}
-	}
-
-	static func canonicalValue(_ value: String) -> String {
-		if value.isEmpty {
-			return "\"\""
-		}
-
-		if value.unicodeScalars.allSatisfy(Self.isBareValueScalar) {
-			return value
-		}
-
-		let escaped = value
-			.replacingOccurrences(of: "\\", with: "\\\\")
-			.replacingOccurrences(of: "\"", with: "\\\"")
-
-		return "\"\(escaped)\""
-	}
-
-	static func isCanonicalKeyScalar(_ scalar: Unicode.Scalar) -> Bool {
-		switch scalar.value {
-		case 48...57, 65...90, 97...122: true
-		case 45, 46, 95: true
-		default: false
-		}
-	}
-
-	static func isBareValueScalar(_ scalar: Unicode.Scalar) -> Bool {
-		if scalar.properties.isWhitespace {
-			return false
-		}
-
-		return switch scalar {
-		case "\"", "=": false
-		default: true
+			"\(Log.Record.KeyValueFieldFormatter.canonicalKey(self.key))=\(Log.Record.KeyValueFieldFormatter.value(self.value))"
 		}
 	}
 }

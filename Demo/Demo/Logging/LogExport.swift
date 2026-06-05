@@ -3,9 +3,17 @@ import Foundation
 
 enum LogExport {
 	enum Format: String, CaseIterable, Identifiable {
-		case standard
 		case canonicalLogLine
+		case `default`
 		case json
+		case tokenOptimized
+
+		static let menuCases: [Self] = [
+			.default,
+			.json,
+			.tokenOptimized,
+			.canonicalLogLine
+		]
 
 		var id: String {
 			self.rawValue
@@ -13,25 +21,28 @@ enum LogExport {
 
 		var title: String {
 			switch self {
-			case .standard: "Default"
 			case .canonicalLogLine: "Canonical Log Line"
+			case .default: "Default Format"
 			case .json: "JSON"
+			case .tokenOptimized: "Token Optimized"
 			}
 		}
 
 		var systemImage: String {
 			switch self {
-			case .standard: "text.alignleft"
 			case .canonicalLogLine: "list.bullet.rectangle"
+			case .default: "text.alignleft"
 			case .json: "curlybraces"
+			case .tokenOptimized: "laptopcomputer"
 			}
 		}
 
 		var formatter: Log.Record.Formatter {
 			switch self {
-			case .standard: .default
 			case .canonicalLogLine: .canonicalLogLine
+			case .default: .default
 			case .json: .json
+			case .tokenOptimized: .tokenOptimized
 			}
 		}
 	}

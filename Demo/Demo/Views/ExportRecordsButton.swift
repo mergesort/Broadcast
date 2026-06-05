@@ -6,7 +6,7 @@ struct ExportRecordsButton: View {
 
 	var body: some View {
 		Menu {
-			ForEach(LogExport.Format.allCases) { format in
+			ForEach(LogExport.Format.menuCases) { format in
 				ShareLink(item: format.text(for: self.records)) {
 					Label("Share with \(format.title) log style", systemImage: format.systemImage)
 				}

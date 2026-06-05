@@ -64,6 +64,106 @@ struct StructuredLogTests {
 	}
 
 	@Test
+	func formatsRecordWithTokenOptimizedFormatStyle() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42.125)),
+			level: .info,
+			signal: .state,
+			message: "Loaded reminders",
+			category: "Reminders",
+			payload: [
+				.init(key: "result", value: "Success"),
+				.init(key: "count", value: 10),
+				.init(key: "library", value: "Broadcast")
+			]
+		)
+
+		#expect(record.formatted(.tokenOptimized) == "t=42125 l=info s=State c=Reminders m=\"Loaded reminders\" p.result=Success p.count=10 p.library=Broadcast")
+	}
+
+	@Test
+	func formatsTokenOptimizedLineWithQuotedValuesAndCanonicalPayloadKeys() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .error,
+			signal: .diagnostic,
+			message: "Failed \"nightly\"\nsync",
+			category: "Background Sync",
+			payload: [
+				.init(key: "error message", value: "Database path C:\\Logs was unavailable"),
+				.init(key: "level", value: "verbose"),
+				.init(key: "", value: nil as String?)
+			]
+		)
+
+		#expect(record.formatted(.tokenOptimized) == "t=42000 l=error s=Diagnostic c=\"Background Sync\" m=\"Failed \\\"nightly\\\"\\nsync\" p.error_message=\"Database path C:\\\\Logs was unavailable\" p.level=verbose p.payload=nil")
+	}
+
+	@Test
+	func formatsTokenOptimizedTypedPayloadValues() throws {
+		let id = try #require(UUID(uuidString: "00000000-0000-4000-8000-000000000001"))
+		let url = try #require(URL(string: "https://example.com/reminders/1"))
+		let date = try Date.ISO8601FormatStyle().parse("2026-05-23T12:00:00Z")
+		let error = NSError(domain: "BroadcastTests", code: 42, userInfo: [NSLocalizedDescriptionKey: "Something failed"])
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .error,
+			signal: .diagnostic,
+			message: "Failed reminder sync",
+			category: "Sync",
+			payload: [
+				.init(key: "string", value: "hello"),
+				.init(key: "optionalString", value: nil as String?),
+				.init(key: "bool", value: true),
+				.init(key: "int", value: 42),
+				.init(key: "uuid", value: id),
+				.init(key: "optionalUUID", value: nil as UUID?),
+				.init(key: "url", value: url),
+				.init(key: "optionalURL", value: nil as URL?),
+				.init(key: "date", value: date),
+				.init(key: "optionalDate", value: nil as Date?),
+				.init(key: "error", value: error),
+				.init(key: "duration", duration: 1.234)
+			]
+		)
+
+		#expect(record.formatted(.tokenOptimized) == "t=42000 l=error s=Diagnostic c=Sync m=\"Failed reminder sync\" p.string=hello p.optionalString=nil p.bool=true p.int=42 p.uuid=00000000-0000-4000-8000-000000000001 p.optionalUUID=nil p.url=https://example.com/reminders/1 p.optionalURL=nil p.date=1779537600000 p.optionalDate=nil p.error=\"Something failed\" p.duration=1234ms")
+	}
+
+	@Test
+	func tokenOptimizedOmitsEmptyOptionalFieldsAndFormatsBlankRecordAsEmptyString() {
+		let structuredRecord = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			signal: .state,
+			message: "",
+			category: "Sync"
+		)
+		let blankRecord = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 42)),
+			level: .info,
+			message: ""
+		)
+
+		#expect(structuredRecord.formatted(.tokenOptimized) == "t=42000 l=info s=State c=Sync")
+		#expect(blankRecord.formatted(.tokenOptimized) == "")
+	}
+
+	@Test
+	func tokenOptimizedRecordFormatterUsesTokenOptimizedFormatStyle() {
+		let record = Log.Record(
+			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
+			level: .warn,
+			signal: .event,
+			message: "Reached retry threshold",
+			category: "Notifications",
+			payload: [.init(key: "attempts", value: 3)]
+		)
+
+		#expect(Log.Record.Formatter.tokenOptimized.format(record) == "t=0 l=warn s=Event c=Notifications m=\"Reached retry threshold\" p.attempts=3")
+	}
+
+	@Test
 	func formatsJSONWithTypedPayloadValues() throws {
 		let id = try #require(UUID(uuidString: "00000000-0000-4000-8000-000000000001"))
 		let url = try #require(URL(string: "https://example.com/reminders/1"))
@@ -239,7 +339,7 @@ struct StructuredLogTests {
 	}
 
 	@Test
-	func consoleLoggerUsesCanonicalLogLineRecordFormatter() {
+	func consoleLoggerUsesDefaultRecordFormatter() {
 		let logger = ConsoleLogger(subsystem: "com.mergesort.BroadcastTests", category: "logs")
 		let record = Log.Record(
 			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
@@ -250,7 +350,7 @@ struct StructuredLogTests {
 			payload: [.init(key: "attempts", value: 3)]
 		)
 
-		#expect(logger.recordFormatter.format(record) == "[1970-01-01T00:00:00Z] canonical-log-line level=warn signal=Event category=Notifications message=\"Reached retry threshold\" attempts=3")
+		#expect(logger.recordFormatter.format(record) == "[Warn | Event | Notifications] @ 1970-01-01T00:00:00Z | Reached retry threshold | payload=[attempts=3]")
 	}
 
 	@Test
