@@ -27,12 +27,11 @@ struct ContentView: View {
 					records: demo.displayedRecords,
 					totalRecordCount: demo.totalRecordCount,
 					auditCategoryBreakdown: demo.auditCategoryBreakdown,
-					exportText: demo.exportText,
 					clearAllRecords: demo.clearAllRecords
 				)
 			}
 			.padding()
-			.frame(maxWidth: 1180, alignment: .topLeading)
+			.frame(maxWidth: 1024, maxHeight: 768, alignment: .topLeading)
 		}
 		.background(Color.appBackground)
 		.task {

@@ -1,20 +1,22 @@
+import Broadcast
 import SwiftUI
 
-struct ExportShareButton: View {
-	let title: String
-	let text: String
-
-	private var isDisabled: Bool {
-		self.text.isEmpty
-	}
+struct ExportRecordsButton: View {
+	let records: [Log.Record]
 
 	var body: some View {
-		ShareLink(item: self.text) {
+		Menu {
+			ForEach(LogExport.Format.allCases) { format in
+				ShareLink(item: format.text(for: self.records)) {
+					Label("Share with \(format.title) log style", systemImage: format.systemImage)
+				}
+			}
+		} label: {
 			HStack(spacing: 8) {
 				Image(systemName: "square.and.arrow.up")
 					.font(.callout.weight(.semibold))
 
-				Text(self.title)
+				Text("Share")
 					.font(.callout.weight(.semibold))
 			}
 			.foregroundStyle(self.isDisabled ? Color.secondary : Color.blue)
@@ -27,7 +29,12 @@ struct ExportShareButton: View {
 			}
 			.clipShape(Capsule())
 		}
+		.menuStyle(.button)
 		.buttonStyle(.plain)
 		.disabled(self.isDisabled)
+	}
+
+	private var isDisabled: Bool {
+		self.records.isEmpty
 	}
 }

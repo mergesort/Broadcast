@@ -3,14 +3,14 @@ import Broadcast
 import Foundation
 
 @MainActor
-final class PersistentAuditLogger: BufferedLoggingDestination {
+final class AuditLogger: BufferedLoggingDestination {
 	let dateProvider: Log.DateProvider
 
 	private let limit: Int
 	private let store: Store<Log.Record>
 	private let logger: MultiSessionLogger
 
-	init(limit: Int = 5_000) {
+	init(limit: Int) {
 		let store = Store<Log.Record>(
 			storage: SQLiteStorageEngine.default(appendingPath: "BroadcastDemoAuditLogs")
 		)

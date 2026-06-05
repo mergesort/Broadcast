@@ -1,3 +1,4 @@
+import Broadcast
 import SwiftUI
 
 #if os(macOS)
@@ -7,14 +8,22 @@ import UIKit
 #endif
 
 struct CopyLogsButton: View {
-	let text: String
+	let records: [Log.Record]
 
 	private var isDisabled: Bool {
-		self.text.isEmpty
+		self.records.isEmpty
 	}
 
 	var body: some View {
-		Button(action: self.copyLogs) {
+		Menu {
+			ForEach(LogExport.Format.allCases) { format in
+				Button(action: {
+					self.copyLogs(format: format)
+				}, label: {
+					Label("Copy as \(format.title)", systemImage: format.systemImage)
+				})
+			}
+		} label: {
 			Label("Copy", systemImage: "doc.on.doc")
 				.font(.callout.weight(.semibold))
 				.foregroundStyle(self.isDisabled ? Color.secondary : Color.primary)
@@ -27,16 +36,19 @@ struct CopyLogsButton: View {
 				}
 				.clipShape(Capsule())
 		}
+		.menuStyle(.button)
 		.buttonStyle(.plain)
 		.disabled(self.isDisabled)
 	}
 
-	private func copyLogs() {
+	private func copyLogs(format: LogExport.Format) {
+		let text = format.text(for: self.records)
+
 		#if os(macOS)
 		NSPasteboard.general.clearContents()
-		NSPasteboard.general.setString(self.text, forType: .string)
+		NSPasteboard.general.setString(text, forType: .string)
 		#elseif canImport(UIKit)
-		UIPasteboard.general.string = self.text
+		UIPasteboard.general.string = text
 		#endif
 	}
 }

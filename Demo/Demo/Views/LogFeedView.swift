@@ -7,7 +7,6 @@ struct LogFeedView: View {
 	let records: [Log.Record]
 	let totalRecordCount: Int
 	let auditCategoryBreakdown: [(AuditCategoryFilter, Int)]
-	let exportText: String
 	let clearAllRecords: () -> Void
 
 	var body: some View {
@@ -17,7 +16,7 @@ struct LogFeedView: View {
 				selectedFeed: self.selectedFeed,
 				recordCount: self.records.count,
 				totalRecordCount: self.totalRecordCount,
-				exportText: self.exportText,
+				records: self.records,
 				clearAllRecords: self.clearAllRecords
 			)
 
@@ -73,7 +72,7 @@ private struct LogToolsView: View {
 	let selectedFeed: LogFeed
 	let recordCount: Int
 	let totalRecordCount: Int
-	let exportText: String
+	let records: [Log.Record]
 	let clearAllRecords: () -> Void
 
 	var body: some View {
@@ -104,8 +103,8 @@ private struct LogToolsView: View {
 
 	@ViewBuilder
 	private var actions: some View {
-		CopyLogsButton(text: self.exportText)
-		ExportShareButton(title: "Share", text: self.exportText)
+		CopyLogsButton(records: self.records)
+		ExportRecordsButton(records: self.records)
 
 		Menu {
 			Button(role: .destructive, action: self.clearAllRecords) {

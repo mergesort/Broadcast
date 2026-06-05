@@ -6,44 +6,43 @@ import Observation
 @Observable
 final class BroadcastDemoState {
 	var traffic = TrafficState.initial
+	var displayedRecords: [Log.Record] = []
+
+	@ObservationIgnored
+	private let loggers = DemoLoggers.shared
+
+	@ObservationIgnored
+	private var simulation = TrafficSimulation()
+
+	@ObservationIgnored
+	private var simulationTask: Task<Void, Never>?
+
+	init() {
+		log.info(
+			.diagnostic,
+			"Dashboard initialized",
+			category: .operations,
+			payload: self.traffic.payload(additionalPayload: [.result("Ready")])
+		)
+
+		self.refreshDisplayedLogs()
+	}
+
 	var selectedFeed = LogFeed.live {
 		didSet {
 			self.refreshDisplayedLogs()
 		}
 	}
+
 	var selectedAuditCategory = AuditCategoryFilter.all {
 		didSet {
 			self.refreshDisplayedLogs()
 		}
 	}
-	var displayedRecords: [Log.Record] = []
-	var exportText = ""
-
-	@ObservationIgnored private let loggers = DemoLoggers()
-	@ObservationIgnored private var simulation = TrafficSimulation()
-	@ObservationIgnored private var simulationTask: Task<Void, Never>?
-
-	init() {
-		self.loggers.operationsLog.info(
-			.diagnostic,
-			"Dashboard initialized",
-			category: .operations,
-			payload: self.traffic.payload(additionalPayload: [.result("Ready")])
-		)
-		self.loggers.auditLog.info(
-			.diagnostic,
-			"Dashboard initialized",
-			category: .operations,
-			payload: self.traffic.payload(additionalPayload: [.result("Ready")])
-		)
-		self.refreshDisplayedLogs()
-	}
 
 	var auditCategoryBreakdown: [(AuditCategoryFilter, Int)] {
 		AuditCategoryFilter.categoryCases.map { category in
-			(category, self.loggers.auditLogger.records().filter { record in
-				category.matches(record)
-			}.count)
+			(category, self.loggers.auditLogger.records().count(where: { category.matches($0) }))
 		}
 	}
 
@@ -58,17 +57,18 @@ final class BroadcastDemoState {
 			return
 		}
 
-		self.loggers.operationsLog.info(
+		log.info(
 			.event,
 			"Realtime simulation started",
 			category: .operations,
 			payload: self.traffic.payload()
 		)
+
 		self.refreshDisplayedLogs()
 
 		self.simulationTask = Task { @MainActor [weak self] in
 			while !Task.isCancelled {
-				try? await Task.sleep(for: .seconds(1.2))
+				try? await Task.sleep(for: .seconds(1.25))
 				self?.advanceSimulation()
 			}
 		}
@@ -79,6 +79,7 @@ final class BroadcastDemoState {
 			}
 
 			await self.loggers.auditLogger.prepareHistory()
+
 			self.loggers.auditLog.info(
 				.diagnostic,
 				"Loaded persisted audit history",
@@ -88,13 +89,14 @@ final class BroadcastDemoState {
 					.result("Loaded")
 				]
 			)
+
 			self.refreshDisplayedLogs()
 		}
 	}
 
 	func processRequest() {
 		let request = self.simulation.processRequest(source: "Manual", state: &self.traffic)
-		self.log(request)
+		self.logRequest(request)
 		self.refreshDisplayedLogs()
 	}
 
@@ -102,7 +104,7 @@ final class BroadcastDemoState {
 		let burst = self.simulation.runBurst(state: &self.traffic)
 
 		for request in burst.requests {
-			self.log(request)
+			self.logRequest(request)
 		}
 
 		self.loggers.auditLog.info(
@@ -114,24 +116,16 @@ final class BroadcastDemoState {
 				.result("Completed")
 			])
 		)
+
 		self.refreshDisplayedLogs()
 	}
 
 	func scaleWorkers() {
 		let change = self.simulation.scaleWorkers(state: &self.traffic)
 
-		self.loggers.operationsLog.info(
+		log.info(
 			.state,
 			"Scaled workers",
-			category: .workers,
-			payload: self.traffic.payload(additionalPayload: [
-				.previousWorkers(change.previousWorkers),
-				.result("Applied")
-			])
-		)
-		self.loggers.auditLog.info(
-			.state,
-			"Worker pool changed",
 			category: .workers,
 			payload: self.traffic.payload(additionalPayload: [
 				.previousWorkers(change.previousWorkers),
@@ -146,26 +140,14 @@ final class BroadcastDemoState {
 
 		switch change.status {
 		case .triggered:
-			self.loggers.operationsLog.warn(
-				.event,
-				"Incident triggered",
-				category: .incidents,
-				payload: self.traffic.payload(additionalPayload: [.result("Investigating")])
-			)
-			self.loggers.auditLog.warn(
+			log.warn(
 				.event,
 				"Incident triggered",
 				category: .incidents,
 				payload: self.traffic.payload(additionalPayload: [.result("Investigating")])
 			)
 		case .resolved:
-			self.loggers.operationsLog.info(
-				.state,
-				"Incident resolved",
-				category: .incidents,
-				payload: self.traffic.payload(additionalPayload: [.result("Recovered")])
-			)
-			self.loggers.auditLog.info(
+			log.info(
 				.state,
 				"Incident resolved",
 				category: .incidents,
@@ -189,6 +171,7 @@ final class BroadcastDemoState {
 				.result("Failed")
 			])
 		)
+
 		self.loggers.auditLog.error(
 			.event,
 			"Failure captured in audit buffer",
@@ -198,6 +181,7 @@ final class BroadcastDemoState {
 				.errorBudget(self.traffic.errorBudget)
 			]
 		)
+
 		self.refreshDisplayedLogs()
 	}
 
@@ -241,15 +225,16 @@ final class BroadcastDemoState {
 		self.refreshDisplayedLogs()
 	}
 
-	private func log(_ request: ProcessedRequest) {
+	private func logRequest(_ request: ProcessedRequest) {
 		let payload = self.traffic.payload(additionalPayload: request.payload)
 
-		self.loggers.operationsLog.info(
+		log.info(
 			.action,
 			"Processed request",
 			category: .pipeline,
 			payload: payload
 		)
+
 		self.loggers.metricsLog.debug(
 			.metric,
 			"Latency sampled",
@@ -258,12 +243,6 @@ final class BroadcastDemoState {
 				.requestID(request.requestID),
 				.latency(milliseconds: request.latency)
 			]
-		)
-		self.loggers.auditLog.info(
-			.action,
-			"Request processed",
-			category: .pipeline,
-			payload: payload
 		)
 	}
 
@@ -280,10 +259,5 @@ final class BroadcastDemoState {
 				return self.selectedAuditCategory.matches(record)
 			}
 			.sorted(by: { $0.timestamp.date > $1.timestamp.date })
-
-		self.exportText = LogExport.text(
-			for: self.displayedRecords,
-			formatter: self.loggers.bufferedLogger(for: self.selectedFeed).recordFormatter
-		)
 	}
 }
