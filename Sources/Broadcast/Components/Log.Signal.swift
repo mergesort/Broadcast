@@ -1,9 +1,9 @@
 public extension Log {
 	/// The intent of a structured log entry.
 	///
-	/// Use signals to make logs easier to scan and filter across categories. For
-	/// example, ``Log.Signal/action`` usually describes something the app attempted,
-	/// while ``Log.Signal/state`` describes a meaningful state transition or decision.
+	/// Use signals to make logs easier to scan and group across categories. For
+	/// example, ``Log/Signal/action`` usually describes something the app attempted,
+	/// while ``Log/Signal/state`` describes a meaningful state transition or decision.
 	/// Broadcast ships common defaults; apps can add domain-specific signals only when
 	/// those defaults do not describe the event clearly.
 	struct Signal: Codable, Sendable, Equatable {

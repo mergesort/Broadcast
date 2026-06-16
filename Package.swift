@@ -16,7 +16,8 @@ let package = Package(
 		)
 	],
 	dependencies: [
-		.package(url: "https://github.com/mergesort/Boutique", from: Version(3, 0, 2))
+		.package(url: "https://github.com/mergesort/Boutique", from: Version(3, 0, 2)),
+		.package(url: "https://github.com/apple/swift-docc-plugin", from: Version(1, 0, 0))
 	],
 	targets: [
 		.target(

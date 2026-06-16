@@ -18,7 +18,7 @@ public final class MultiSessionLogger: BufferedLoggingDestination {
 	/// Creates a multi-session logger backed by a Boutique store.
 	///
 	/// The logger keeps an in-memory snapshot for synchronous reads and serializes
-	/// writes into the store. Inject a fixed ``Log.DateProvider`` in tests when
+	/// writes into the store. Inject a fixed ``Log/DateProvider`` in tests when
 	/// deterministic output matters.
 	@MainActor
 	public init(store: Store<Log.Record>, dateProvider: Log.DateProvider = .default, timestampFormatStyle: Log.Timestamp.FormatStyle = .default) {

@@ -4,7 +4,7 @@ import OSLog
 ///
 /// Use ``ConsoleLogger`` when you want logs to appear in Console.app, Xcode, or OSLog
 /// collection tools. Apps should usually initialize it with their own subsystem and
-/// category so logs can be filtered separately from Broadcast internals. Broadcast
+/// category so logs can be inspected separately from Broadcast internals. Broadcast
 /// writes rendered log values with public privacy, so do not send secrets, tokens, or
 /// sensitive user data to this destination.
 public struct ConsoleLogger: LoggingDestination {

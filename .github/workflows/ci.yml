@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Print Swift version
+        run: swift --version
+      - name: Run tests
+        run: swift test
+      - name: Validate documentation
+        run: swift package generate-documentation --target Broadcast

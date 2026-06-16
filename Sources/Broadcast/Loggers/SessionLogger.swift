@@ -13,7 +13,7 @@ public final class SessionLogger: BufferedLoggingDestination {
 
 	/// Creates a session buffer with configurable time dependencies.
 	///
-	/// ``Log.DateProvider/default`` and the default ``Log.Timestamp.FormatStyle`` are
+	/// ``Log/DateProvider/default`` and the default ``Log/Timestamp/FormatStyle`` are
 	/// suitable for production. Inject fixed values in tests when log output must be
 	/// deterministic.
 	public init(dateProvider: Log.DateProvider = .default, timestampFormatStyle: Log.Timestamp.FormatStyle = .default) {

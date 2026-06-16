@@ -1,15 +1,15 @@
 import Foundation
 
 public extension Log.Record {
-	/// A type-erased formatter for ``Log.Record`` values.
+	/// A type-erased formatter for ``Log/Record`` values.
 	///
 	/// ``LoggingDestination`` uses this concrete type for its
 	/// ``LoggingDestination/recordFormatter`` property so destinations can use any
 	/// custom record formatter without changing the structured logging call-site API.
 	///
-	/// Define a custom formatter by conforming to ``Foundation/FormatStyle`` with
-	/// ``Foundation/FormatStyle/FormatInput`` equal to ``Log.Record`` and
-	/// ``Foundation/FormatStyle/FormatOutput`` equal to ``Swift/String``:
+	/// Define a custom formatter by conforming to `Foundation.FormatStyle` with
+	/// `FormatStyle.FormatInput` equal to ``Log/Record`` and
+	/// `FormatStyle.FormatOutput` equal to `String`:
 	///
 	/// ```swift
 	/// struct CompactRecordFormatStyle: Foundation.FormatStyle, Sendable {
@@ -42,7 +42,7 @@ public extension Log.Record {
 	/// let text = record.formatted(.compactRecord)
 	/// ```
 	///
-	/// Or wrap it in ``Log.Record.Formatter`` when configuring a destination:
+	/// Or wrap it in ``Log/Record/Formatter`` when configuring a destination:
 	///
 	/// ```swift
 	/// final class CompactLoggingDestination: LoggingDestination {
@@ -57,11 +57,11 @@ public extension Log.Record {
 	/// }
 	/// ```
 	///
-	/// ``Log.Record.Formatter`` intentionally does not conform to
-	/// ``Foundation/FormatStyle`` because closure-backed type erasure cannot truthfully
+	/// ``Log/Record/Formatter`` intentionally does not conform to
+	/// `Foundation.FormatStyle` because closure-backed type erasure cannot truthfully
 	/// satisfy `FormatStyle`'s `Codable`, `Hashable`, and `Equatable` requirements.
-	/// Use a concrete ``Foundation/FormatStyle`` for direct
-	/// ``Log.Record/formatted(_:)`` calls, and use this type when storing a formatter
+	/// Use a concrete `Foundation.FormatStyle` for direct
+	/// ``Log/Record/formatted(_:)`` calls, and use this type when storing a formatter
 	/// on a destination.
 	struct Formatter: Sendable {
 		private let formatRecord: @Sendable (Log.Record) -> String
@@ -71,7 +71,7 @@ public extension Log.Record {
 			self.formatRecord = format
 		}
 
-		/// Creates a type-erased record formatter from a Swift ``Foundation/FormatStyle``.
+		/// Creates a type-erased record formatter from a Swift `Foundation.FormatStyle`.
 		public init<Style: Foundation.FormatStyle & Sendable>(_ style: Style) where Style.FormatInput == Log.Record, Style.FormatOutput == String {
 			self.formatRecord = { record in
 				record.formatted(style)
