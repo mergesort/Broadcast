@@ -3,7 +3,7 @@ import Foundation
 public extension Log.Timestamp {
 	/// Broadcast's default timestamp formatter.
 	///
-	/// Apps usually use the default ``Log.Timestamp.FormatStyle``. Use another provided
+	/// Apps usually use the default ``Log/Timestamp/FormatStyle``. Use another provided
 	/// style when support exports need a different timestamp shape:
 	///
 	/// ```swift
@@ -11,9 +11,9 @@ public extension Log.Timestamp {
 	/// ```
 	///
 	/// `SessionLogger` and `MultiSessionLogger` currently accept this concrete
-	/// ``Log.Timestamp.FormatStyle`` for logger-level timestamp configuration. If an
+	/// ``Log/Timestamp/FormatStyle`` for logger-level timestamp configuration. If an
 	/// app needs a fully custom timestamp representation, define a separate
-	/// ``Foundation/FormatStyle`` for direct ``Log.Timestamp`` formatting or for use
+	/// `Foundation.FormatStyle` for direct ``Log/Timestamp`` formatting or for use
 	/// inside a custom ``LoggingDestination``.
 	struct FormatStyle: Foundation.FormatStyle, Codable, Hashable, Sendable {
 		private let style: Style
@@ -30,11 +30,11 @@ public extension Log.Timestamp {
 		}
 	}
 
-	/// Formats this timestamp with a Swift ``Foundation/FormatStyle``.
+	/// Formats this timestamp with a Swift `Foundation.FormatStyle`.
 	///
 	/// Define a custom timestamp format style when an app wants a timestamp shape that
-	/// does not match Broadcast's built-in ``Log.Timestamp.FormatStyle/default`` or
-	/// ``Foundation/FormatStyle/timestamp`` styles:
+	/// does not match Broadcast's built-in ``Log/Timestamp/FormatStyle/default`` or
+	/// `FormatStyle.timestamp` styles:
 	///
 	/// ```swift
 	/// struct SupportTimestampFormatStyle: Foundation.FormatStyle {
@@ -54,7 +54,7 @@ public extension Log.Timestamp {
 	/// ```
 	///
 	/// Use this direct formatting path in custom destinations that own their timestamp
-	/// rendering. Broadcast's concrete buffered loggers use ``Log.Timestamp.FormatStyle``
+	/// rendering. Broadcast's concrete buffered loggers use ``Log/Timestamp/FormatStyle``
 	/// for their logger-level `timestampFormatStyle` parameter.
 	func formatted<Style: Foundation.FormatStyle>(_ style: Style) -> Style.FormatOutput where Style.FormatInput == Self {
 		style.format(self)

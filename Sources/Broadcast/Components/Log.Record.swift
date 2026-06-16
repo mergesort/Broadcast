@@ -4,7 +4,7 @@ public extension Log {
 	/// The semantic representation of a structured log before it is rendered.
 	///
 	/// ``Log`` forwards structured calls to each ``LoggingDestination`` as semantic
-	/// components. Use ``Log.Record`` directly when you need to format a structured log
+	/// components. Use ``Log/Record`` directly when you need to format a structured log
 	/// yourself, test exact structured components, or build a custom formatter. Most
 	/// app call-sites should use structured ``Log`` methods such as
 	/// ``Log/info(_:_:category:payload:)`` instead.

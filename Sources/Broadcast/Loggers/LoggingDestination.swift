@@ -1,6 +1,6 @@
 /// A write-only logging sink.
 ///
-/// ``Log.Record`` is Broadcast's canonical log event model. Destination
+/// ``Log/Record`` is Broadcast's canonical log event model. Destination
 /// requirements accept records so custom destinations can inspect level, timestamp,
 /// signal, category, message, and payload without re-parsing formatted strings.
 /// Consumer call-sites should usually use the ergonomic ``Log`` APIs instead of

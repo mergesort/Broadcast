@@ -3,7 +3,7 @@ import Foundation
 public extension Log {
 	/// Supplies dates for buffered log entries.
 	///
-	/// Apps usually use ``Log.DateProvider/default``. Tests can inject a fixed
+	/// Apps usually use ``Log/DateProvider/default``. Tests can inject a fixed
 	/// provider so exported log strings are deterministic instead of depending on
 	/// wall-clock time.
 	struct DateProvider: Sendable {

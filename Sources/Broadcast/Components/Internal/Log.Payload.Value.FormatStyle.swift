@@ -1,7 +1,7 @@
 import Foundation
 
 extension Log.Payload.Value {
-	/// Formats this payload value with a Swift ``Foundation/FormatStyle``.
+	/// Formats this payload value with a Swift `Foundation.FormatStyle`.
 	func formatted<Style: Foundation.FormatStyle>(_ style: Style) -> Style.FormatOutput where Style.FormatInput == Self {
 		style.format(self)
 	}
