@@ -3,11 +3,21 @@
 
 import PackageDescription
 
+// brightdigit/atleast fork: trimmed for AtLeast (a watchOS-first app).
+//
+// The `MultiSessionLogger` destination and its Boutique-backed cross-launch
+// persistence are removed here — AtLeast uses `ConsoleLogger` + `SessionLogger`
+// only, and Boutique's chain (Bodega/SQLite/swift-collections) does not declare
+// watchOS support. Dropping it leaves Broadcast dependency-free and lets it
+// build for watchOS. watchOS/tvOS/visionOS floors match `Synchronization.Mutex`.
 let package = Package(
 	name: "Broadcast",
 	platforms: [
 		.iOS("18.0"),
-		.macOS("15.0")
+		.macOS("15.0"),
+		.watchOS("11.0"),
+		.tvOS("18.0"),
+		.visionOS("2.0")
 	],
 	products: [
 		.library(
@@ -15,21 +25,13 @@ let package = Package(
 			targets: ["Broadcast"]
 		)
 	],
-	dependencies: [
-		.package(url: "https://github.com/mergesort/Boutique", from: Version(3, 0, 2)),
-		.package(url: "https://github.com/apple/swift-docc-plugin", from: Version(1, 0, 0))
-	],
 	targets: [
 		.target(
-			name: "Broadcast",
-			dependencies: [
-				.product(name: "Boutique", package: "Boutique")
-			]
+			name: "Broadcast"
 		),
 		.testTarget(
 			name: "BroadcastTests",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique"),
 				"Broadcast"
 			]
 		)
