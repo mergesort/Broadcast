@@ -1,3 +1,4 @@
+#if MultiSessionLogging
 import Boutique
 @testable import Broadcast
 import Foundation
@@ -183,3 +184,5 @@ private final class SequentialDateProvider: Sendable {
 		}
 	}
 }
+
+#endif

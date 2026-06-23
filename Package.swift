@@ -5,12 +5,17 @@ import PackageDescription
 
 // brightdigit/atleast fork for AtLeast (a watchOS-first app).
 //
-// `MultiSessionLogger` and its Boutique-backed cross-launch persistence are kept.
-// Boutique's chain (Bodega/SQLite/swift-collections) does not declare watchOS, so
-// under some Xcode 27 betas Tuist generated those targets with
-// WATCHOS_DEPLOYMENT_TARGET=8.0 and the watchOS build failed; if that resurfaces,
-// override the floor via the app's Tuist PackageSettings rather than dropping the
-// logger. watchOS/tvOS/visionOS floors match `Synchronization.Mutex`.
+// `MultiSessionLogger` and its Boutique-backed cross-launch persistence live behind the
+// `MultiSessionLogging` package trait, declared in `Package@swift-6.1.swift` (traits need
+// swift-tools 6.1+). This 5.10 manifest is the fallback for older toolchains: it is
+// dependency-free, and `MultiSessionLogger` (guarded by `#if MultiSessionLogging`) compiles
+// to nothing because the trait flag is never set here.
+//
+// Why the trait: Boutique's chain (Bodega/SQLite/swift-collections) does not declare
+// watchOS, so when a build assigns those targets a watchOS floor below 9.0 (Xcode-version
+// dependent), Bodega's `URL.documentsDirectory`/`.cachesDirectory` usage fails to compile.
+// Keeping Boutique off the graph by default makes the watch build clean; consumers that want
+// the logger enable the trait. watchOS/tvOS/visionOS floors match `Synchronization.Mutex`.
 let package = Package(
 	name: "Broadcast",
 	platforms: [
@@ -26,20 +31,13 @@ let package = Package(
 			targets: ["Broadcast"]
 		)
 	],
-	dependencies: [
-		.package(url: "https://github.com/mergesort/Boutique", from: Version(3, 0, 2))
-	],
 	targets: [
 		.target(
-			name: "Broadcast",
-			dependencies: [
-				.product(name: "Boutique", package: "Boutique")
-			]
+			name: "Broadcast"
 		),
 		.testTarget(
 			name: "BroadcastTests",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique"),
 				"Broadcast"
 			]
 		)
