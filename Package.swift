@@ -7,9 +7,10 @@ import PackageDescription
 //
 // `MultiSessionLogger` and its Boutique-backed cross-launch persistence live behind the
 // `MultiSessionLogging` package trait, declared in `Package@swift-6.1.swift` (traits need
-// swift-tools 6.1+). This 5.10 manifest is the fallback for older toolchains: it is
-// dependency-free, and `MultiSessionLogger` (guarded by `#if MultiSessionLogging`) compiles
-// to nothing because the trait flag is never set here.
+// swift-tools 6.1+). This 5.10 manifest is the fallback for older toolchains: its only
+// dependency is swift-docc-plugin (a build-tool plugin that never links into the product),
+// and `MultiSessionLogger` (guarded by `#if MultiSessionLogging`) compiles to nothing because
+// the trait flag is never set here.
 //
 // Why the trait: Boutique's chain (Bodega/SQLite/swift-collections) does not declare
 // watchOS, so when a build assigns those targets a watchOS floor below 9.0 (Xcode-version
@@ -30,6 +31,9 @@ let package = Package(
 			name: "Broadcast",
 			targets: ["Broadcast"]
 		)
+	],
+	dependencies: [
+		.package(url: "https://github.com/apple/swift-docc-plugin", from: Version(1, 0, 0))
 	],
 	targets: [
 		.target(
