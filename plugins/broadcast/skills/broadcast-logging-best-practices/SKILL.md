@@ -13,7 +13,7 @@ Use this skill when integrating Broadcast into a Swift project. Treat Broadcast 
 2. Import `Broadcast` where logging is configured or called.
 3. Create a shared `Log` instance from one or more destinations.
 4. For app or app-specific package code, prefer one immutable app or package-scoped global `let log` so SwiftUI and non-SwiftUI surfaces share the same destination graph.
-5. Add app-specific `Log.Category` values and `Log.Payload` helper factories in the integrating app or app-specific logging package, not in Broadcast.
+5. Use Broadcast's built-in `Log.Payload` helper factories for common typed values, then add app-specific `Log.Category` values and app-specific `Log.Payload` helpers in the integrating app or app-specific logging package.
 6. Replace important free-form logs with structured logs where they help explain user-visible behavior, support diagnostics, startup, sync, entitlement, routing, persistence, or network decisions.
 7. Validate with the host project's normal build and test commands.
 
@@ -27,7 +27,7 @@ Use this skill when integrating Broadcast into a Swift project. Treat Broadcast 
 - `MultiSessionLogger` buffers canonical `Log.Record` values across launches using persistent storage; use it only when the host app has configured the required persistence.
 - `Log.Signal` describes the intent of a structured log. Defaults include `.action`, `.state`, `.event`, `.metric`, and `.diagnostic`.
 - `Log.Category` describes a human-readable subsystem or area.
-- `Log.Payload` stores typed key-value diagnostics and exposes public typed initializers so call-sites do not need to format values manually.
+- `Log.Payload` stores typed key-value diagnostics and exposes public typed initializers plus helper factories such as `.string`, `.bool`, `.int`, `.uuid`, `.url`, `.date`, `.duration`, `.error`, `.count`, `.id`, and `.timestamp` so call-sites do not need to format values manually.
 - `Log.Record` is the identifiable timestamped semantic structured log value that destinations format through `recordFormatter`, which defaults to Broadcast's standard single-line format; records create a UUID and current timestamp by default.
 - `Log.Record.Formatter` is the type-erased destination-level formatter for structured `Log.Record` values.
 - Built-in `Log.Record` format styles include `.default`, `.json`, `.tokenOptimized`, and `.canonicalLogLine`.
@@ -165,8 +165,8 @@ log.info(
 	"Loaded reminders",
 	category: "Reminders",
 	payload: [
-		.init(key: "result", value: "Success"),
-		.init(key: "reminderCount", value: reminderCount)
+		.string("result", "Success"),
+		.int("reminderCount", reminderCount)
 	]
 )
 ```
@@ -176,8 +176,8 @@ Keep the event message at the call-site. If many logs need the same contextual v
 ```swift
 func reminderDiagnosticsPayload(additionalPayload: [Log.Payload] = []) -> [Log.Payload] {
 	additionalPayload + [
-		.init(key: "title", value: reminder.title),
-		.init(key: "priority", value: reminder.priority)
+		.string("title", reminder.title),
+		.string("priority", reminder.priority)
 	]
 }
 
@@ -186,7 +186,7 @@ log.info(
 	"Updated reminder priority",
 	category: "Reminders",
 	payload: reminderDiagnosticsPayload(additionalPayload: [
-		.init(key: "result", value: "Success")
+		.string("result", "Success")
 	])
 )
 ```
@@ -245,7 +245,7 @@ struct ExampleApp: App {
 			ContentView()
 		}
 		.onChange(of: self.scenePhase) { _, scenePhase in
-			log.info(.state, "Scene phase changed", category: .app, payload: [.init(key: "route", value: String(describing: scenePhase))])
+			log.info(.state, "Scene phase changed", category: .app, payload: [.string("route", String(describing: scenePhase))])
 		}
 	}
 }
@@ -272,7 +272,7 @@ let record = Log.Record(
 	signal: .state,
 	message: "Loaded reminders",
 	category: "Reminders",
-	payload: [.init(key: "result", value: "Success")]
+	payload: [.string("result", "Success")]
 )
 
 let text = record.formatted(.default)
@@ -411,12 +411,13 @@ extension Log.Category {
 
 extension Log.Payload {
 	static func priority(_ value: String) -> Self {
-		.init(key: "priority", value: value)
+		.string("priority", value)
 	}
 }
 ```
 
-Use typed `Log.Payload(key:value:)` initializers instead of adding global
+Use Broadcast's built-in `Log.Payload` helpers, or typed
+`Log.Payload(key:value:)` initializers when needed, instead of adding global
 formatting extensions on `String`, `UUID`, `Bool`, `Error`, or unrelated types.
 
 Keep helpers close to the code that owns them. Broad concepts used across many
@@ -424,9 +425,10 @@ modules can live in a shared logging package; narrow payloads should live in the
 app target or feature package that emits those logs.
 
 Prefer typed helper factories when a payload key is part of the host app's
-durable diagnostic vocabulary. Raw `.init(key:value:)` is fine for one-off local
-details, but repeated keys should become helpers so spelling and value formatting
-stay consistent.
+durable diagnostic vocabulary. Broadcast's built-in `.string`, `.int`, `.id`,
+`.error`, `.duration`, and similar helpers are fine for one-off local details,
+but repeated keys should become app-specific helpers so spelling and value
+formatting stay consistent.
 
 ## Destination Guidance
 

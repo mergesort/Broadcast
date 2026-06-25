@@ -604,6 +604,35 @@ struct StructuredLogTests {
 	}
 
 	@Test
+	func storesConveniencePayloadValues() throws {
+		let id = try #require(UUID(uuidString: "00000000-0000-4000-8000-000000000001"))
+		let url = try #require(URL(string: "https://example.com/reminders/1"))
+		let date = try Date.ISO8601FormatStyle().parse("2026-05-23T12:00:00Z")
+		let error = NSError(domain: "BroadcastTests", code: 42, userInfo: [NSLocalizedDescriptionKey: "Something failed"])
+
+		#expect(Log.Payload.string("string", "hello").value == .string("hello"))
+		#expect(Log.Payload.string("optionalString", nil).value == .string(nil))
+		#expect(Log.Payload.bool("bool", true).value == .bool(true))
+		#expect(Log.Payload.int("int", 42).value == .int(42))
+		#expect(Log.Payload.uuid("uuid", id).value == .uuid(id))
+		#expect(Log.Payload.uuid("optionalUUID", nil).value == .uuid(nil))
+		#expect(Log.Payload.url("url", url).value == .url(url))
+		#expect(Log.Payload.url("optionalURL", nil).value == .url(nil))
+		#expect(Log.Payload.date("date", date).value == .date(date))
+		#expect(Log.Payload.date("optionalDate", nil).value == .date(nil))
+		#expect(Log.Payload.error("failure", error).value == .error("Something failed"))
+		#expect(Log.Payload.error(error).key == "error")
+		#expect(Log.Payload.error(error).value == .error("Something failed"))
+		#expect(Log.Payload.duration("elapsed", seconds: 1.234).value == .duration(1.234))
+		#expect(Log.Payload.duration(seconds: 1.234).key == "duration")
+		#expect(Log.Payload.duration(seconds: 1.234).value == .duration(1.234))
+		#expect(Log.Payload.count(10) == .init(key: "count", value: 10))
+		#expect(Log.Payload.id(id) == .init(key: "id", value: id))
+		#expect(Log.Payload.id("reminder-1") == .init(key: "id", value: "reminder-1"))
+		#expect(Log.Payload.timestamp(date) == .init(key: "timestamp", value: date))
+	}
+
+	@Test
 	func formatsTypedPayloadValues() throws {
 		let destination = CapturingLoggingDestination()
 		let log = Log(destinations: [destination])

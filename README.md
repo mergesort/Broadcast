@@ -78,8 +78,8 @@ log.info(
 Broadcast's structured log is composed of a few primitives:
 
 - `Log.Level`: `debug`, `info`, `warn`, `error`, or `fault`.
-- `Log.Signal`: What type of thing happened, such as `.action`, `.state`, `.event`, `.metric`, or `.diagnostic`.
-- `Log.Category`: The part of your app this belongs to, such as `"Sync"`, `"Account"`, or `"Payments"`.
+- `Log.Signal`: Describes what change occurred, such as an `.action`, `.state`, `.event`, `.metric`, or `.diagnostic`.
+- `Log.Category`: Describes what part or subsystem of your app this log is tied to, such as `"Sync"`, `"Account"`, or `"Payments"`.
 - `Log.Payload`: Typed key-value diagnostics like identifiers, counts, dates, durations, and errors.
 
 You can keep call-sites readable by adding properties and functions that represent signals, categories, and payloads unique to your app:
@@ -91,15 +91,15 @@ extension Log.Category {
 
 extension Log.Payload {
 	static func result(_ result: String) -> Self {
-		Self(key: "result", value: result)
+		Self.string("result", result)
 	}
 
 	static func accountID(_ id: UUID) -> Self {
-		Self(key: "accountID", value: id)
+		Self.uuid("accountID", id)
 	}
 
 	static func linkCount(_ count: Int) -> Self {
-		Self(key: "linkCount", value: count)
+		Self.int("linkCount", count)
 	}
 }
 
@@ -110,7 +110,7 @@ log.info(
 	payload: [
 		.accountID(account.id),
 		.linkCount(links.count),
-		.init(key: "duration", duration: syncDuration)
+		.duration(seconds: syncDuration)
 	]
 )
 ```
@@ -157,7 +157,7 @@ syncLog.info(
 	"Started sync",
 	category: "Sync",
 	payload: [
-		.init(key: "reason", value: "AppLaunch")
+		.string("reason", "AppLaunch")
 	]
 )
 ```
@@ -187,8 +187,8 @@ let record = Log.Record(
 	message: "Synced links",
 	category: "Sync",
 	payload: [
-		.init(key: "linkCount", value: 10),
-		.init(key: "tagCount", value: 5)
+		.int("linkCount", 10),
+		.int("tagCount", 5)
 	]
 )
 

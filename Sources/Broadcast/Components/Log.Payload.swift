@@ -64,6 +64,75 @@ public extension Log {
 	}
 }
 
+// MARK: Convenience Payloads
+
+public extension Log.Payload {
+	/// Creates a string payload with a custom key.
+	static func string(_ key: String, _ value: String?) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates a boolean payload with a custom key.
+	static func bool(_ key: String, _ value: Bool) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates an integer payload with a custom key.
+	static func int(_ key: String, _ value: Int) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates a UUID payload with a custom key.
+	static func uuid(_ key: String, _ value: UUID?) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates a URL payload with a custom key.
+	static func url(_ key: String, _ value: URL?) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates a date payload with a custom key.
+	static func date(_ key: String, _ value: Date?) -> Self {
+		Self(key: key, value: value)
+	}
+
+	/// Creates a duration payload with a custom key.
+	static func duration(_ key: String = "duration", seconds: TimeInterval) -> Self {
+		Self(key: key, duration: seconds)
+	}
+
+	/// Creates an error payload.
+	static func error(_ error: any Error) -> Self {
+		Self(key: "error", value: error)
+	}
+
+	/// Creates an error payload with a custom key.
+	static func error(_ key: String, _ error: any Error) -> Self {
+		Self(key: key, value: error)
+	}
+
+	/// Creates a count payload.
+	static func count(_ count: Int) -> Self {
+		Self(key: "count", value: count)
+	}
+
+	/// Creates an identifier payload from a UUID.
+	static func id(_ id: UUID?) -> Self {
+		Self(key: "id", value: id)
+	}
+
+	/// Creates an identifier payload from a string.
+	static func id(_ id: String) -> Self {
+		Self(key: "id", value: id)
+	}
+
+	/// Creates a timestamp payload.
+	static func timestamp(_ timestamp: Date?) -> Self {
+		Self(key: "timestamp", value: timestamp)
+	}
+}
+
 // MARK: Internal
 
 extension Log.Payload {
