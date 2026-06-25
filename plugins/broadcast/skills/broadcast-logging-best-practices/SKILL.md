@@ -7,6 +7,8 @@ description: Integrate Broadcast into a Swift app or package, including configur
 
 Use this skill when integrating Broadcast into a Swift project. Treat Broadcast as an external reusable logging library; do not assume you are modifying Broadcast itself unless the user explicitly asks to work on the library.
 
+Before making non-trivial Broadcast changes or integrations, read the current Broadcast README and relevant DocC articles in `Sources/Broadcast/Documentation.docc/` so examples, API choices, and terminology match the library's public guidance.
+
 ## Integration Workflow
 
 1. Add Broadcast as a dependency using the host project's normal package workflow.

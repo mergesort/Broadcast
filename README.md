@@ -228,7 +228,7 @@ The built-in formats cover common cases.
 [1970-01-01T00:00:42Z] canonical-log-line level=info signal=State category=Sync message="Synced links" linkCount=10 tagCount=5
 ```
 
-`.tokenOptimized`: A compact logging designed to optimize AI context windows.
+`.tokenOptimized`: A compact log format designed to optimize AI context windows.
 
 ```text
 t=42000 l=info s=State c=Sync m="Synced links" p.linkCount=10 p.tagCount=5
@@ -236,7 +236,7 @@ t=42000 l=info s=State c=Sync m="Synced links" p.linkCount=10 p.tagCount=5
 
 ---
 
-If Broadcast's built-in formats are not the right fit for you needs, you can define a custom `FormatStyle`. You can even provide different shapes on a per-export basis:
+If Broadcast's built-in formats are not the right fit for your needs, you can define a custom `FormatStyle`. You can even provide different shapes on a per-export basis:
 
 ```swift
 import Foundation
@@ -295,8 +295,8 @@ Broadcast includes [Claude Code](https://claude.ai/code) and [Codex](https://dev
 If you have cloned the Broadcast repo locally, Claude Code can discover the plugin from the repo's marketplace metadata. Otherwise run:
 
 ```
-/plugin marketplace add mergesort/Boutique
-/plugin install boutique@boutique
+/plugin marketplace add mergesort/Broadcast
+/plugin install broadcast@broadcast
 /reload-plugins
 ```
 
@@ -305,7 +305,7 @@ If you have cloned the Broadcast repo locally, Claude Code can discover the plug
 If you have cloned the Broadcast repo locally, Codex can discover the plugin from the repo's marketplace metadata. Otherwise run:
 
 ```
-codex plugin marketplace add mergesort/Boutique
+codex plugin marketplace add mergesort/Broadcast
 ```
 
 ## Requirements
