@@ -12,7 +12,7 @@ Use this skill when integrating Broadcast into a Swift project. Treat Broadcast 
 1. Add Broadcast as a dependency using the host project's normal package workflow.
 2. Import `Broadcast` where logging is configured or called.
 3. Create a shared `Log` instance from one or more destinations.
-4. Inject that `Log` through the host app's existing dependency injection pattern.
+4. For app or app-specific package code, prefer one immutable app or package-scoped global `let log` so SwiftUI and non-SwiftUI surfaces share the same destination graph.
 5. Add app-specific `Log.Category` values and `Log.Payload` helper factories in the integrating app or app-specific logging package, not in Broadcast.
 6. Replace important free-form logs with structured logs where they help explain user-visible behavior, support diagnostics, startup, sync, entitlement, routing, persistence, or network decisions.
 7. Validate with the host project's normal build and test commands.
@@ -35,20 +35,58 @@ Use this skill when integrating Broadcast into a Swift project. Treat Broadcast 
 
 ## Broadcast Setup
 
-Create one shared `Log` near the app's composition root, using destinations that match the app's diagnostics needs.
+Create one app or package-owned global `let log` near the app or package's composition root, using destinations that match its diagnostics needs.
 
-For local console output plus in-memory support export:
+For local console output plus in-memory support export, define one app or package-owned
+global logger:
 
 ```swift
 import Broadcast
 
-let sessionLogger = SessionLogger()
-let log = Log(
+public let sessionLogger = SessionLogger()
+
+public let log = Log(
 	destinations: [
 		ConsoleLogger(subsystem: "com.example.app", category: "logs"),
 		sessionLogger
 	]
 )
+```
+
+Use `public` when the logger lives in an app-specific logging module; omit it
+when the logger is only needed inside one app target.
+
+This keeps call-sites short while preserving one shared destination graph:
+
+```swift
+log.info(.event, "App launched", category: .startup)
+```
+
+Keep destination references global too when the app or package needs them later. For
+example, `sessionLogger` should remain accessible to the support-export flow if
+the app exposes `sessionLogger.logs()` or `sessionLogger.records()`.
+
+When a SwiftUI app wants the logger in view code, expose the same shared logger
+through SwiftUI's modern `@Entry` environment syntax. The environment should point
+at the app's global logger, not a separate SwiftUI-only logger.
+
+```swift
+import Broadcast
+import SwiftUI
+
+extension EnvironmentValues {
+	@Entry var log: Log = ExampleApp.log
+}
+
+struct ReminderListView: View {
+	@Environment(\.log) private var log
+
+	var body: some View {
+		Button("Sync") {
+			self.log.info(.action, "Started sync", category: "Sync")
+		}
+	}
+}
 ```
 
 For deterministic tests, inject a fixed date provider:
@@ -104,12 +142,13 @@ let promptLogs = sessionLogger.records()
 
 For multi-session export, use `MultiSessionLogger` only after the host app configures its persistence store. Keep persistence setup in the host app layer and pass the configured store into the logger.
 
-Inject `Log` using the host project's existing pattern:
+Expose `Log` using the host project's existing pattern:
 
-- SwiftUI apps: put `Log` in an environment value, observable dependency container, or app services object.
-- UIKit/AppKit apps: pass `Log` through coordinators, service containers, or initializers.
-- Server apps: register `Log` in the application/request dependency container and pass it into handlers or services.
-- Packages: accept `Log` in initializers instead of reaching for globals, so tests can inject capturing destinations.
+- App or app-specific package code: prefer one immutable app or package-scoped global `let log` for the common logging surface.
+- SwiftUI apps: expose that same global logger to views with `EnvironmentValues` plus `@Entry`, or pass it through an observable dependency container or app services object when that already exists.
+- UIKit/AppKit apps: use the app global directly at app-owned call-sites, and pass `Log` through coordinators, service containers, or initializers when a dependency boundary needs it.
+- Server apps: expose one process/app logger where appropriate, and register or pass `Log` through the application/request dependency container when handlers and services need explicit dependencies.
+- Reusable packages: accept `Log` in initializers instead of reaching for app globals, so tests can inject capturing destinations.
 
 Avoid creating a new `Log` at every call-site. Prefer a shared instance so destinations, buffering, and export behavior stay consistent.
 
@@ -159,6 +198,61 @@ log.info("Created", "Reminder", 3)
 ```
 
 Passing an array to `Log`, such as `log.info([a, b, c])`, logs that array as one value, matching Swift's `print` behavior. Use `log.info(a, b, c)` when the intent is multiple logged values.
+
+## Abstraction Guardrails
+
+Prefer direct log calls at real production action and state-transition sites:
+
+```swift
+log.info(.event, "App launched", category: .startup)
+```
+
+Do not introduce a wrapper type solely so a log call can be unit tested. A
+logging wrapper is justified only when production code needs shared payload
+construction, repeated event shape, dependency composition, or a real integration
+boundary.
+
+Common smells:
+
+- `AppLifecycleLogger`, `SearchLogger`, or similar types that only forward one-line log calls.
+- Tests that exist only to prove forwarding wrappers emit expected strings.
+- Logger abstractions created before the feature workflow they describe exists.
+
+Prefer testing durable pieces instead:
+
+- Category identifiers.
+- Payload helper formatting.
+- Redaction behavior.
+- Diagnostics export content.
+- Custom destinations or formatters.
+- Persistent/session log export.
+
+## SwiftUI Lifecycle Logging
+
+For app lifecycle logs, instrument the real SwiftUI boundaries directly:
+
+```swift
+@main
+struct ExampleApp: App {
+	@Environment(\.scenePhase) private var scenePhase
+
+	init() {
+		log.info(.event, "App launched", category: .startup)
+	}
+
+	var body: some Scene {
+		WindowGroup {
+			ContentView()
+		}
+		.onChange(of: self.scenePhase) { _, scenePhase in
+			log.info(.state, "Scene phase changed", category: .app, payload: [.init(key: "route", value: String(describing: scenePhase))])
+		}
+	}
+}
+```
+
+Use direct lifecycle logs unless the host app already has a production services
+container that owns lifecycle instrumentation.
 
 ## Record Formatting
 
@@ -272,3 +366,100 @@ pairs with `Log.Record.KeyValueFormatStyle`:
 - `.raw` preserves the key and value text and backs default payload formatting.
 - `.normalized` normalizes keys and quotes ambiguous values for canonical log lines.
 - `.tokenOptimized` uses normalized key-value output and escapes control characters so one record stays on one physical line.
+
+## Structured Log Style
+
+- Keep structured logs single-line: `[Info | State | Category] @ 2026-05-31T18:06:16Z | Message | payload=[key=value]`.
+- Start messages with a capital letter.
+- Make categories human-readable: `"Reminders"`, not `reminders`.
+- Use stable, compact payload keys: `id`, `count`, `duration`, `result`, `reason`, `route`.
+- Preserve payload order so the most important diagnostic values appear first.
+- Put errors in payloads instead of interpolating them into messages.
+- Include explicit result payloads for durable outcomes: success for completed operations, failure for structured error operations, and specific alternatives such as skipped, rejected, cancelled, or conflict when those are more accurate.
+- Use durable structured errors for failures that explain user-visible behavior, data loss, sync, payments, routing, startup, or persistence issues.
+- Do not put real user data, tokens, secrets, or realistic account identifiers into examples, tests, or documentation.
+- Follow the host project's local logging style for helper names, file names, visibility, and payload grouping.
+- Treat structured log calls as visual blocks: separate them from adjacent executable code with a blank line, while avoiding extra blank lines against structural boundaries such as opening braces, `case`, `catch`, and closing braces.
+
+## Privacy Checklist
+
+Prefer durable, low-risk metadata over raw user content:
+
+- Log token presence such as `hasAccessToken=true`, never access token or refresh token values.
+- Log search length or query category, not raw search text.
+- Log counts, result, reason, route, status code, duration, and operation names.
+- Log safe stable IDs only when they are useful for diagnostics and not sensitive in the host domain.
+- Log scope counts, or sorted scope names only when scopes are expected support context.
+- Do not log full API response bodies, profile data, payment data, contact details, device tokens, or arbitrary user-entered content.
+- Use synthetic fixtures in examples and tests; never include realistic secrets or account identifiers.
+
+For auth, search, media, sync, and account features, default to presence and
+counts first. Add raw identifiers only after deciding they are safe and useful
+for debugging that specific product.
+
+## App-Specific Extensions
+
+Create app-specific categories and payload helpers outside Broadcast:
+
+```swift
+import Broadcast
+
+extension Log.Category {
+	static let reminders: Self = "Reminders"
+	static let sync: Self = "Sync"
+}
+
+extension Log.Payload {
+	static func priority(_ value: String) -> Self {
+		.init(key: "priority", value: value)
+	}
+}
+```
+
+Use typed `Log.Payload(key:value:)` initializers instead of adding global
+formatting extensions on `String`, `UUID`, `Bool`, `Error`, or unrelated types.
+
+Keep helpers close to the code that owns them. Broad concepts used across many
+modules can live in a shared logging package; narrow payloads should live in the
+app target or feature package that emits those logs.
+
+Prefer typed helper factories when a payload key is part of the host app's
+durable diagnostic vocabulary. Raw `.init(key:value:)` is fine for one-off local
+details, but repeated keys should become helpers so spelling and value formatting
+stay consistent.
+
+## Destination Guidance
+
+- App code should normally call `Log`, not individual destinations.
+- Custom destinations conform to `LoggingDestination` by implementing `log(_ record: Log.Record)`.
+- Custom destinations do not need to implement zero-argument methods like `info()`; Broadcast provides those as print-like convenience extensions.
+- Custom destinations do not need to implement each level method unless they are intentionally overriding Broadcast's default record creation path.
+- Custom destinations can override `recordFormatter` when they need a different structured record format.
+- Custom destinations receive semantic records, so they can inspect `level`, `timestamp`, `signal`, `category`, `message`, and `payload` before formatting or exporting.
+- Use `BufferedLoggingDestination` when a destination needs to export canonical records or formatted text for support, diagnostics, or other use cases where individual records are useful.
+
+## Concurrency Guidance
+
+- Logging destination methods are synchronous, so protect shared mutable memory synchronously.
+- Prefer simple synchronous synchronization for in-memory buffers on supported platforms.
+- Keep persistence integrations isolated behind the host app's appropriate actor or synchronization boundary.
+- Keep logged records `Sendable` when they cross task or isolation boundaries.
+- Avoid async-only destination APIs unless the host app is intentionally redesigning logging around async calls.
+
+## Testing Guidance
+
+When integrating Broadcast, add focused tests for the host app's logging layer:
+
+- App-specific `Log.Category` and `Log.Payload` helpers produce expected identifiers and typed values.
+- Structured logs include the intended signal, category, message, and payload order.
+- Shared payload builders preserve the intended ordering of event-specific values and common context.
+- Support-log export works when using a buffered destination.
+- Important privacy constraints are enforced with synthetic fixtures.
+- Array-as-one-value behavior is understood at `Log` call-sites if the app relies on it.
+- If the host app defines custom payload, timestamp, or record `FormatStyle` implementations, test each formatter independently using normal `import Broadcast`.
+- If the host app defines a custom destination `recordFormatter`, add an end-to-end test proving the destination applies `Log.Record.Formatter` and combines record formatting with any relevant timestamp or payload formatting.
+- Do not add tests that only prove package names, target linkage, or forwarding wrappers. Those tests create confidence noise without protecting behavior.
+
+Run the host project's normal test/build command. If no standard command exists,
+inspect the project first and choose the least surprising validation path for
+that project.
