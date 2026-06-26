@@ -1,8 +1,19 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
+// Broadcast requires Swift 6.0+: it uses `Synchronization.Mutex` and, on non-Apple platforms,
+// `Foundation.FormatStyle` — both of which only exist in the Swift 6.0 toolchain on Linux.
+//
+// Boutique (and its Bodega/SQLite/swift-collections chain) imports `CryptoKit`, which is
+// unavailable on non-Apple platforms, so its *target* dependency is gated to Apple platforms
+// with `.when(platforms:)`. On Linux SwiftPM still resolves Boutique but never compiles it,
+// and `MultiSessionLogger` (guarded by `#if canImport(Boutique)`) compiles to nothing.
+// `ConsoleLogger` is likewise gated on `#if canImport(OSLog)`.
+//
+// `swiftLanguageModes: [.v5]` keeps Swift 5 language mode so existing `static var` globals do
+// not become hard concurrency errors under Swift 6 mode.
 let package = Package(
 	name: "Broadcast",
 	platforms: [
@@ -23,15 +34,24 @@ let package = Package(
 		.target(
 			name: "Broadcast",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique")
+				.product(
+					name: "Boutique",
+					package: "Boutique",
+					condition: .when(platforms: [.iOS, .macOS, .tvOS, .watchOS, .visionOS])
+				)
 			]
 		),
 		.testTarget(
 			name: "BroadcastTests",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique"),
-				"Broadcast"
+				"Broadcast",
+				.product(
+					name: "Boutique",
+					package: "Boutique",
+					condition: .when(platforms: [.iOS, .macOS, .tvOS, .watchOS, .visionOS])
+				)
 			]
 		)
-	]
+	],
+	swiftLanguageModes: [.v5]
 )

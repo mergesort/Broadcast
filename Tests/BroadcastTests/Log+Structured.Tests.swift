@@ -2,6 +2,19 @@
 import Foundation
 import Testing
 
+extension Trait where Self == ConditionTrait {
+	/// Disables the annotated test when OSLog is unavailable (non-Apple platforms), because
+	/// `ConsoleLogger` is not compiled into that build. The test is reported as disabled
+	/// rather than silently passing.
+	static var requiresConsoleLogger: Self {
+		#if canImport(OSLog)
+			.enabled(if: true)
+		#else
+			.disabled("Requires OSLog, which is only available on Apple platforms")
+		#endif
+	}
+}
+
 struct StructuredLogTests {
 	@Test
 	func formatsRecordWithDefaultBroadcastFormatStyle() {
@@ -338,8 +351,9 @@ struct StructuredLogTests {
 		#expect(record.formatted(style) == "[42] canonical-log-line level=info signal=Metric category=Sync message=\"Measured reminder sync\" duration=1.25s")
 	}
 
-	@Test
+	@Test(.requiresConsoleLogger)
 	func consoleLoggerUsesDefaultRecordFormatter() {
+		#if canImport(OSLog)
 		let logger = ConsoleLogger(subsystem: "com.mergesort.BroadcastTests", category: "logs")
 		let record = Log.Record(
 			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
@@ -351,6 +365,9 @@ struct StructuredLogTests {
 		)
 
 		#expect(logger.recordFormatter.format(record) == "[Warn | Event | Notifications] @ 1970-01-01T00:00:00Z | Reached retry threshold | payload=[attempts=3]")
+		#else
+		Issue.record("OSLog is unavailable on this platform; this test should not run.")
+		#endif
 	}
 
 	@Test
