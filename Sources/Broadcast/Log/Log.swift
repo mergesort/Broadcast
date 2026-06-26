@@ -88,22 +88,30 @@ public extension Log {
 	/// lifetime control, deterministic tests, or multiple independently exported buffers.
 	static let sessionLogger = SessionLogger()
 
+	#if canImport(OSLog)
 	/// Broadcast's shared console destination.
 	///
 	/// Prefer creating your own ``ConsoleLogger`` with your app's subsystem and category
 	/// for production integrations.
 	static let consoleLogger = ConsoleLogger(subsystem: "com.mergesort.broadcast", category: "logs")
+	#endif
 
 	/// A convenience log that writes to Broadcast's default console and session destinations.
 	///
 	/// This is useful for quick integration or examples. Apps that need support-log
 	/// export, privacy-specific routing, or dependency injection should construct
 	/// their own ``Log``.
+	///
+	/// ``ConsoleLogger`` is only included on Apple platforms where OSLog is available;
+	/// elsewhere the default log writes to the ``SessionLogger`` alone.
 	static let `default` = Log(
-		destinations: [
-			Log.consoleLogger,
-			Log.sessionLogger
-		]
+		destinations: {
+			#if canImport(OSLog)
+			return [Log.consoleLogger, Log.sessionLogger]
+			#else
+			return [Log.sessionLogger]
+			#endif
+		}()
 	)
 }
 
