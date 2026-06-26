@@ -1,18 +1,19 @@
-/// A logging destination that can export the text it has captured.
+/// A destination that keeps records so they can be exported later.
 ///
-/// This capability can be used for support flows, diagnostics exports, or tests that need to
-/// inspect emitted logs. Destinations that only write elsewhere, such as the system
-/// console, should conform to ``LoggingDestination`` directly.
+/// Use a buffered destination for support screens, bug report attachments, AI
+/// debugging exports, and tests that need to inspect what your app logged.
+/// Destinations that only write elsewhere, such as the system console, should
+/// conform to ``LoggingDestination`` directly.
 public protocol BufferedLoggingDestination: LoggingDestination {
-	/// Returns the destination's currently buffered records.
+	/// Returns the original records currently buffered by this destination.
 	func records() -> [Log.Record]
 
-	/// Returns the destination's currently buffered logs as exportable text.
+	/// Returns the currently buffered records as readable export text.
 	func logs() -> String
 }
 
 public extension BufferedLoggingDestination {
-	/// Returns the destination's currently buffered records as exportable text.
+	/// Returns the currently buffered records as readable export text.
 	func logs() -> String {
 		self.records()
 			.map({ self.recordFormatter.format($0) })

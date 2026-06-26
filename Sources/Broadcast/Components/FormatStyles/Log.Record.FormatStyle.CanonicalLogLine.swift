@@ -1,7 +1,7 @@
 import Foundation
 
 public extension Log.Record.FormatStyle {
-	/// Formats records as a Stripe-style canonical log line.
+	/// Formats records as a dense key-value line inspired by Stripe's canonical log lines.
 	///
 	/// Inspired by Stripe's Canonical Log Lines:
 	/// https://stripe.com/blog/canonical-log-lines
@@ -40,7 +40,7 @@ public extension Log.Record.FormatStyle {
 // MARK: FormatStyle
 
 public extension FormatStyle where Self == Log.Record.FormatStyle.CanonicalLogLine {
-	/// A Stripe-style canonical log line record format.
+	/// A dense key-value record format inspired by Stripe's canonical log lines.
 	static var canonicalLogLine: Self {
 		Self()
 	}
@@ -49,7 +49,7 @@ public extension FormatStyle where Self == Log.Record.FormatStyle.CanonicalLogLi
 // MARK: Log.Record.Formatter
 
 public extension Log.Record.Formatter {
-	/// A type-erased Stripe-style canonical log line record formatter.
+	/// A type-erased dense key-value record formatter inspired by Stripe's canonical log lines.
 	static var canonicalLogLine: Self {
 		Self(.canonicalLogLine)
 	}

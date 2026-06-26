@@ -1,13 +1,14 @@
 import Foundation
 
 public extension Log {
-	/// A typed key-value pair attached to a structured log.
+	/// Typed context attached to a structured log.
 	///
-	/// Payloads are where durable diagnostic context belongs: identifiers, counts,
-	/// decisions, timings, and errors. Prefer typed app-specific helper factories for
-	/// repeated keys, such as `Log.Payload.priority(_:)` or
-	/// `Log.Payload.dueDate(_:)`, so spelling, ordering, and value formatting stay
-	/// consistent. Avoid storing secrets, tokens, or sensitive user data in payloads.
+	/// Payloads are where most of a log's useful context lives: identifiers, counts,
+	/// dates, durations, outcomes, errors, and anything else that helps explain what
+	/// happened. Prefer app-specific helper factories for repeated keys, such as
+	/// `Log.Payload.priority(_:)` or `Log.Payload.dueDate(_:)`, so spelling, ordering,
+	/// and value formatting stay consistent. Avoid storing secrets, tokens, or
+	/// sensitive user data in payloads.
 	struct Payload: Codable, Sendable, Equatable {
 		/// The stable diagnostic key rendered before the payload value.
 		public let key: String

@@ -1,17 +1,18 @@
 import Foundation
 import Synchronization
 
-/// An in-memory buffered destination for logs from the current process.
+/// An in-memory destination for logs from the current launch.
 ///
-/// Use ``SessionLogger`` when you need support-log export or test inspection for the
-/// current launch only. It does not persist across app restarts; use
-/// ``MultiSessionLogger`` when historical logs should survive relaunches.
+/// Use ``SessionLogger`` for support-log export, bug report attachments, AI
+/// debugging exports, or tests that need to inspect what your app logged during
+/// this process. It does not persist across app restarts; use ``MultiSessionLogger``
+/// when historical logs should survive relaunches.
 public final class SessionLogger: BufferedLoggingDestination {
 	public let dateProvider: Log.DateProvider
 	private let storage = SessionLogStorage()
 	private let timestampFormatStyle: Log.Timestamp.FormatStyle
 
-	/// Creates a session buffer with configurable time dependencies.
+	/// Creates a session buffer with configurable timestamp behavior.
 	///
 	/// ``Log/DateProvider/default`` and the default ``Log/Timestamp/FormatStyle`` are
 	/// suitable for production. Inject fixed values in tests when log output must be

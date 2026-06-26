@@ -1,17 +1,16 @@
-/// A write-only logging sink.
+/// A place where Broadcast sends log records.
 ///
-/// ``Log/Record`` is Broadcast's canonical log event model. Destination
-/// requirements accept records so custom destinations can inspect level, timestamp,
-/// signal, category, message, and payload without re-parsing formatted strings.
-/// Consumer call-sites should usually use the ergonomic ``Log`` APIs instead of
-/// constructing records manually.
+/// Custom destinations receive semantic ``Log/Record`` values, so they can inspect
+/// level, timestamp, signal, category, message, and payload before formatting,
+/// uploading, storing, or exporting them. App call-sites should usually use
+/// ``Log`` APIs like `log.info` instead of calling destinations directly.
 public protocol LoggingDestination {
 	/// Supplies dates for records created by this destination's convenience methods.
 	///
 	/// Destinations can override this for deterministic tests or custom time sources.
 	var dateProvider: Log.DateProvider { get }
 
-	/// The type-erased formatter this destination uses for log records.
+	/// The formatter this destination uses when it renders records.
 	///
 	/// Custom destinations can override this with
 	/// `Log.Record.Formatter(.customRecordStyle)` to change how records are rendered

@@ -1,11 +1,11 @@
 import Foundation
 
 public extension Log.Record.FormatStyle {
-	/// Formats records as a compact token-optimized log line.
+	/// Formats records as compact lines for AI context windows.
 	///
-	/// The token-optimized format is designed for agents, where you have a limited context window,
-	/// for example in a prompt. This is ideal for large lists of logs because it keeps Broadcast's
-	/// fixed record envelope short, yet preserving application payload names:
+	/// Use this when you want to hand an agent a lot of runtime history without
+	/// spending tokens on repeated labels. Broadcast keeps the fixed record envelope
+	/// short while preserving your payload names:
 	///
 	/// `t=42125 l=error s=Diagnostic c="Background Sync" m="Failed sync" p.retry_count=2 p.duration=1250ms`
 	///
@@ -36,7 +36,7 @@ public extension Log.Record.FormatStyle {
 // MARK: FormatStyle
 
 public extension FormatStyle where Self == Log.Record.FormatStyle.TokenOptimized {
-	/// A compact record format optimized for token-sensitive text contexts.
+	/// A compact record format designed to optimize AI context windows.
 	static var tokenOptimized: Self {
 		Self()
 	}
@@ -45,7 +45,7 @@ public extension FormatStyle where Self == Log.Record.FormatStyle.TokenOptimized
 // MARK: Log.Record.Formatter
 
 public extension Log.Record.Formatter {
-	/// A type-erased compact record formatter optimized for token-sensitive text contexts.
+	/// A type-erased compact record formatter designed to optimize AI context windows.
 	static var tokenOptimized: Self {
 		Self(.tokenOptimized)
 	}

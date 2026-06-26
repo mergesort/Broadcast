@@ -1,13 +1,12 @@
 import Foundation
 
 public extension Log {
-	/// The semantic representation of a structured log before it is rendered.
+	/// A structured log before any destination renders it.
 	///
-	/// ``Log`` forwards structured calls to each ``LoggingDestination`` as semantic
-	/// components. Use ``Log/Record`` directly when you need to format a structured log
-	/// yourself, test exact structured components, or build a custom formatter. Most
-	/// app call-sites should use structured ``Log`` methods such as
-	/// ``Log/info(_:_:category:payload:)`` instead.
+	/// ``Log/Record`` keeps the level, timestamp, signal, category, message, and
+	/// payload separate so the same event can become readable support text, JSON,
+	/// canonical log lines, or token-optimized output for agents. Most app call-sites
+	/// should use structured ``Log`` methods such as ``Log/info(_:_:category:payload:)``.
 	struct Record: Codable, Identifiable, Sendable, Equatable {
 		/// A stable identifier for this record.
 		public let id: UUID

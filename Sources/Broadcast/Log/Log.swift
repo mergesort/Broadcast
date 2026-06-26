@@ -1,17 +1,16 @@
-/// A lightweight logging facade that fans each log call out to one or more destinations.
+/// The API your app calls to write logs.
 ///
-/// Create one shared ``Log`` near your app's composition root and inject it through
-/// your app, package, or server dependencies. ``Log`` intentionally stays small:
-/// destinations decide where output goes and how structured records are formatted,
-/// while ``Log`` gives call-sites consistent plain and structured logging APIs.
+/// A ``Log`` owns one or more destinations. Every `log.debug`, `log.info`, or
+/// `log.error` call is sent to each destination, so your app gets one simple API
+/// while destinations decide where records go and how they are formatted.
 public struct Log {
 	/// The destinations that receive every log call.
 	///
-	/// Use multiple destinations when the same event should go to different places,
-	/// such as the system console and an in-memory support-log buffer.
+	/// Use multiple destinations when the same event should go to the console, an
+	/// in-memory support log, a persistent store, or a custom destination you build.
 	public let destinations: [any LoggingDestination]
 
-	/// Creates a logger that writes to each destination in order.
+	/// Creates a log that writes to each destination in order.
 	public init(destinations: [any LoggingDestination]) {
 		self.destinations = destinations
 	}
@@ -83,22 +82,23 @@ public struct Log {
 }
 
 public extension Log {
-	/// Broadcast's shared in-memory logger for the current process.
+	/// Broadcast's shared in-memory support log for the current process.
 	///
 	/// Prefer creating and injecting your own ``SessionLogger`` when you need explicit
 	/// lifetime control, deterministic tests, or multiple independently exported buffers.
 	static let sessionLogger = SessionLogger()
 
-	/// Broadcast's shared OSLog-backed console destination.
+	/// Broadcast's shared console destination.
 	///
 	/// Prefer creating your own ``ConsoleLogger`` with your app's subsystem and category
 	/// for production integrations.
 	static let consoleLogger = ConsoleLogger(subsystem: "com.mergesort.broadcast", category: "logs")
 
-	/// A convenience logger that writes to Broadcast's default console and session destinations.
+	/// A convenience log that writes to Broadcast's default console and session destinations.
 	///
-	/// This is useful for quick integration or examples. Apps with dependency injection,
-	/// support-log export, or privacy-specific routing should construct their own ``Log``.
+	/// This is useful for quick integration or examples. Apps that need support-log
+	/// export, privacy-specific routing, or dependency injection should construct
+	/// their own ``Log``.
 	static let `default` = Log(
 		destinations: [
 			Log.consoleLogger,

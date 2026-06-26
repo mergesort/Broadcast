@@ -1,11 +1,11 @@
 import Foundation
 
 public extension Log {
-	/// Returns a new logger that writes to this logger's destinations plus additional destinations.
+	/// Returns a new log that writes to this log's destinations plus additional destinations.
 	///
-	/// Use this to compose destination sets without mutating the original logger. This
-	/// is useful for adding console, buffered, remote, test, or feature-specific
-	/// destinations while preserving the existing logger configuration.
+	/// Use this when one package, feature, or workflow needs its own destination
+	/// without losing the app-wide logger. The returned ``Log`` keeps the same
+	/// `log.info` API, but each record also goes to the extra destinations.
 	func combined(with destinations: [LoggingDestination]) -> Log {
 		var allDestinations = self.destinations
 		allDestinations.append(contentsOf: destinations)
@@ -13,7 +13,7 @@ public extension Log {
 		return Log(destinations: allDestinations)
 	}
 
-	/// Returns a new logger that writes to this logger's destinations plus one additional destination.
+	/// Returns a new log that writes to this log's destinations plus one additional destination.
 	func combined(with destination: LoggingDestination) -> Log {
 		self.combined(with: [destination])
 	}

@@ -2,12 +2,11 @@ import Boutique
 import Foundation
 import Synchronization
 
-/// A persistent buffered destination for logs that should survive app relaunches.
+/// A persistent destination for logs that should survive app relaunches.
 ///
-/// Use ``MultiSessionLogger`` for support diagnostics where the most useful evidence
-/// may have happened in a previous launch. The host app owns the Boutique `Store`
-/// configuration so it can choose the right container, retention policy, and app
-/// group behavior.
+/// Use ``MultiSessionLogger`` when the useful evidence may have happened before
+/// the current launch. The host app owns the Boutique `Store` configuration, so it
+/// can choose the right storage location, app group, and retention policy.
 public final class MultiSessionLogger: BufferedLoggingDestination {
 	public let dateProvider: Log.DateProvider
 	private let recordStorage: Mutex<[Log.Record]>

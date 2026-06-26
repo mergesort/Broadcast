@@ -1,9 +1,9 @@
 import Foundation
 
 public extension Log.Record.FormatStyle {
-	/// Formats records as a conventional structured JSON object.
+	/// Formats records as JSON that can be inspected with JSON tools.
 	///
-	/// The JSON output is designed for log export and ingestion, not as Broadcast's
+	/// The JSON output is designed for export and ingestion, not as Broadcast's
 	/// internal `Codable` storage shape. Broadcast renders stable top-level logging
 	/// fields first, then includes typed payload values under `payload`.
 	///
@@ -43,7 +43,7 @@ public extension Log.Record.FormatStyle {
 // MARK: FormatStyle
 
 public extension FormatStyle where Self == Log.Record.FormatStyle.JSON {
-	/// A conventional structured JSON record format.
+	/// A structured JSON record format.
 	static var json: Self {
 		Self()
 	}
@@ -52,7 +52,7 @@ public extension FormatStyle where Self == Log.Record.FormatStyle.JSON {
 // MARK: Log.Record.Formatter
 
 public extension Log.Record.Formatter {
-	/// A type-erased conventional structured JSON record formatter.
+	/// A type-erased structured JSON record formatter.
 	static var json: Self {
 		Self(.json)
 	}
