@@ -17,6 +17,11 @@ let package = Package(
 	],
 	traits: [
 		.trait(
+			name: "MultiSessionLogging",
+			description: "Enables MultiSessionLogger for persisting logs across launches."
+		),
+		.default(enabledTraits: ["MultiSessionLogging"]),
+		.trait(
 			name: "SwiftLogging",
 			description: "Enables SwiftLogDestination for forwarding Broadcast records to swift-log."
 		)
@@ -30,14 +35,22 @@ let package = Package(
 		.target(
 			name: "Broadcast",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique"),
+				.product(
+					name: "Boutique",
+					package: "Boutique",
+					condition: .when(platforms: [.iOS, .macOS], traits: ["MultiSessionLogging"])
+				),
 				.product(name: "Logging", package: "swift-log", condition: .when(traits: ["SwiftLogging"]))
 			]
 		),
 		.testTarget(
 			name: "BroadcastTests",
 			dependencies: [
-				.product(name: "Boutique", package: "Boutique"),
+				.product(
+					name: "Boutique",
+					package: "Boutique",
+					condition: .when(platforms: [.iOS, .macOS], traits: ["MultiSessionLogging"])
+				),
 				.product(name: "Logging", package: "swift-log", condition: .when(traits: ["SwiftLogging"])),
 				"Broadcast"
 			]

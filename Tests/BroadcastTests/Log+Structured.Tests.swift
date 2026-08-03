@@ -338,6 +338,7 @@ struct StructuredLogTests {
 		#expect(record.formatted(style) == "[42] canonical-log-line level=info signal=Metric category=Sync message=\"Measured reminder sync\" duration=1.25s")
 	}
 
+	#if canImport(OSLog)
 	@Test
 	func consoleLoggerUsesDefaultRecordFormatter() {
 		let logger = ConsoleLogger(subsystem: "com.mergesort.BroadcastTests", category: "logs")
@@ -352,6 +353,7 @@ struct StructuredLogTests {
 
 		#expect(logger.recordFormatter.format(record) == "[Warn | Event | Notifications] @ 1970-01-01T00:00:00Z | Reached retry threshold | payload=[attempts=3]")
 	}
+	#endif
 
 	@Test
 	func formatsRecordWithCustomFormatStyle() {

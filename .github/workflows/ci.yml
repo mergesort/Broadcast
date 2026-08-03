@@ -8,15 +8,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Test
+  test-macos:
+    name: Test (macOS)
     runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Print Swift version
         run: swift --version
-      - name: Run tests
+      - name: Run default trait tests
         run: swift test
+      - name: Run swift-log trait tests
+        run: swift test --traits SwiftLogging
+      - name: Run combined trait tests
+        run: swift test --traits MultiSessionLogging,SwiftLogging
       - name: Validate documentation
         run: swift package generate-documentation --target Broadcast
+
+  test-linux:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.1.3-noble
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Print Swift version
+        run: swift --version
+      - name: Run default trait tests
+        run: swift test
+      - name: Run swift-log trait tests
+        run: swift test --traits SwiftLogging

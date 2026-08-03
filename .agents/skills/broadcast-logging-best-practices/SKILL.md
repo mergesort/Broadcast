@@ -24,9 +24,9 @@ Before making non-trivial Broadcast changes or integrations, read the current Br
 - `Log` fans out one log call to one or more destinations.
 - `LoggingDestination` is the write-only sink protocol whose primitive is `log(_ record:)`; Broadcast provides default `debug`, `info`, `warn`, `error`, and `fault` convenience methods that create records.
 - `BufferedLoggingDestination` extends `LoggingDestination` with `records()` for destinations that need access to canonical records, plus overridable default `logs()` text export.
-- `ConsoleLogger` writes process-local output.
+- `ConsoleLogger` writes process-local output through Apple's unified logging system and is available only on Apple platforms.
 - `SessionLogger` buffers logs in memory for the current process.
-- `MultiSessionLogger` buffers canonical `Log.Record` values across launches using persistent storage; use it only when the host app has configured the required persistence.
+- `MultiSessionLogger` buffers canonical `Log.Record` values across launches when Broadcast's default `MultiSessionLogging` package trait is enabled. It currently uses Boutique on Apple platforms; use it only when the host app has configured the required persistence.
 - `SwiftLogDestination` forwards Broadcast records into apple/swift-log when Broadcast is built with the `SwiftLogging` package trait. Use it when Broadcast should remain the call-site API but an app or server also needs records delivered to a configured swift-log backend.
 - `Log.Signal` describes the intent of a structured log. Defaults include `.action`, `.state`, `.event`, `.metric`, and `.diagnostic`.
 - `Log.Category` describes a human-readable subsystem or area.
@@ -40,8 +40,8 @@ Before making non-trivial Broadcast changes or integrations, read the current Br
 
 Create one app or package-owned global `let log` near the app or package's composition root, using destinations that match its diagnostics needs.
 
-For local console output plus in-memory support export, define one app or package-owned
-global logger:
+For Apple-platform console output plus in-memory support export, define one app or
+package-owned global logger:
 
 ```swift
 import Broadcast
@@ -143,7 +143,7 @@ let promptLogs = sessionLogger.records()
 	.joined(separator: "\n")
 ```
 
-To forward Broadcast records to swift-log, enable the `SwiftLogging` trait on the Broadcast package dependency and add `SwiftLogDestination` to the same shared `Log`:
+To forward Broadcast records to swift-log without enabling Broadcast's default multi-session persistence support, enable only the `SwiftLogging` trait on the Broadcast package dependency and add `SwiftLogDestination` to the same shared `Log`:
 
 ```swift
 // Package.swift
@@ -164,6 +164,9 @@ let log = Log(
 	]
 )
 ```
+
+On Linux, enable the `SwiftLogging` package trait and use `SwiftLogDestination`
+instead of `ConsoleLogger` for process output.
 
 `SwiftLogDestination` maps Broadcast levels to swift-log levels and forwards record details as metadata. Broadcast's record identifier, timestamp, signal, and category use `broadcast.*` keys, and payload values use `payload.*` keys. Keep Broadcast as the app-facing frontend; use swift-log as another destination unless the host project explicitly needs the reverse integration where swift-log call-sites enter Broadcast.
 

@@ -88,6 +88,7 @@ public extension Log {
 	/// lifetime control, deterministic tests, or multiple independently exported buffers.
 	static let sessionLogger = SessionLogger()
 
+	#if canImport(OSLog)
 	/// Broadcast's shared console destination.
 	///
 	/// Prefer creating your own ``ConsoleLogger`` with your app's subsystem and category
@@ -105,6 +106,13 @@ public extension Log {
 			Log.sessionLogger
 		]
 	)
+	#else
+	/// A convenience log that writes to Broadcast's default session destination.
+	///
+	/// On platforms without Apple's unified logging system, use ``SwiftLogDestination``
+	/// or another process-appropriate destination for console output.
+	static let `default` = Log(destinations: [Log.sessionLogger])
+	#endif
 }
 
 extension Log {

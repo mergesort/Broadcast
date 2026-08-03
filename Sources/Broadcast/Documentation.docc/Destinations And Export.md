@@ -6,9 +6,12 @@ Destinations are what make Broadcast composable. One call to `log.info` can writ
 
 Broadcast includes a few destinations out of the box:
 
-- ``ConsoleLogger`` writes to Apple's unified logging system.
+- ``ConsoleLogger`` writes to Apple's unified logging system on Apple platforms.
 - ``SessionLogger`` buffers logs in memory for the current launch.
-- ``MultiSessionLogger`` persists logs across launches using a [Boutique](https://github.com/mergesort/boutique) `Store`.
+- ``MultiSessionLogger`` persists logs across launches when the `MultiSessionLogging` package trait is enabled. It currently uses a [Boutique](https://github.com/mergesort/boutique) `Store` on Apple platforms.
+
+On Linux, enable the `SwiftLogging` package trait and use ``SwiftLogDestination``
+for process output instead of ``ConsoleLogger``.
 
 ## Forward Records to swift-log
 
@@ -78,6 +81,8 @@ Use `logs()` when you want readable text for support screens or bug report attac
 ## Persist Logs Across Launches
 
 ``MultiSessionLogger`` buffers logs across launches using a Boutique `Store`.
+The `MultiSessionLogging` package trait enables this API and is part of Broadcast's
+default traits, so existing Apple integrations receive it automatically.
 
 ```swift
 import Broadcast
