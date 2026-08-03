@@ -17,6 +17,7 @@ By integrating Broadcast from day one you'll give coding agents the feedback loo
 - [Getting Started](#getting-started)
 - [Structured Logs](#structured-logs)
 - [Destinations](#destinations)
+- [swift-log](#swift-log)
 - [Formatting](#formatting)
 - [Documentation](#documentation)
 - [Coding Agent Plugins](#coding-agent-plugins)
@@ -173,6 +174,32 @@ final class UploadLoggingDestination: LoggingDestination {
 }
 ```
 
+## swift-log
+
+Broadcast can forward records to [apple/swift-log](https://github.com/apple/swift-log) when you enable the `SwiftLogging` package trait. This lets Broadcast stay as the call-site API while a server or app still writes to whatever swift-log backend it has configured.
+
+```swift
+import Broadcast
+
+let log = Log(
+	destinations: [
+		SessionLogger(),
+		SwiftLogDestination(label: "com.example.app")
+	]
+)
+
+log.info(
+	.state,
+	"Synced links",
+	category: "Sync",
+	payload: [
+		.count(10)
+	]
+)
+```
+
+`SwiftLogDestination` maps Broadcast levels to swift-log levels and forwards record details as metadata. Broadcast's record identifier, timestamp, signal, and category use `broadcast.*` keys, and payload values use `payload.*` keys.
+
 ## Formatting
 
 Broadcast treats `Log.Record` as the source of truth for logs, and asks destinations to format their logs.
@@ -312,7 +339,7 @@ codex plugin marketplace add mergesort/Broadcast
 
 - iOS 18.0+
 - macOS 15.0+
-- Xcode 16+
+- Xcode 16.3+
 
 ## Installation
 
@@ -323,6 +350,18 @@ Add Broadcast to your package dependencies:
 ```swift
 dependencies: [
 .package(url: "https://github.com/mergesort/Broadcast", from: Version(1, 0, 0))
+]
+```
+
+To enable the swift-log destination, enable Broadcast's `SwiftLogging` trait:
+
+```swift
+dependencies: [
+	.package(
+		url: "https://github.com/mergesort/Broadcast",
+		from: Version(1, 0, 0),
+		traits: ["SwiftLogging"]
+	)
 ]
 ```
 

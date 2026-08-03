@@ -27,6 +27,7 @@ Before making non-trivial Broadcast changes or integrations, read the current Br
 - `ConsoleLogger` writes process-local output.
 - `SessionLogger` buffers logs in memory for the current process.
 - `MultiSessionLogger` buffers canonical `Log.Record` values across launches using persistent storage; use it only when the host app has configured the required persistence.
+- `SwiftLogDestination` forwards Broadcast records into apple/swift-log when Broadcast is built with the `SwiftLogging` package trait. Use it when Broadcast should remain the call-site API but an app or server also needs records delivered to a configured swift-log backend.
 - `Log.Signal` describes the intent of a structured log. Defaults include `.action`, `.state`, `.event`, `.metric`, and `.diagnostic`.
 - `Log.Category` describes a human-readable subsystem or area.
 - `Log.Payload` stores typed key-value diagnostics and exposes public typed initializers plus helper factories such as `.string`, `.bool`, `.int`, `.uuid`, `.url`, `.date`, `.duration`, `.error`, `.count`, `.id`, and `.timestamp` so call-sites do not need to format values manually.
@@ -141,6 +142,30 @@ let promptLogs = sessionLogger.records()
 	.map({ $0.formatted(.tokenOptimized) })
 	.joined(separator: "\n")
 ```
+
+To forward Broadcast records to swift-log, enable the `SwiftLogging` trait on the Broadcast package dependency and add `SwiftLogDestination` to the same shared `Log`:
+
+```swift
+// Package.swift
+.package(
+	url: "https://github.com/mergesort/Broadcast",
+	from: Version(1, 0, 0),
+	traits: ["SwiftLogging"]
+)
+```
+
+```swift
+import Broadcast
+
+let log = Log(
+	destinations: [
+		SessionLogger(),
+		SwiftLogDestination(label: "com.example.app")
+	]
+)
+```
+
+`SwiftLogDestination` maps Broadcast levels to swift-log levels and forwards record details as metadata. Broadcast's record identifier, timestamp, signal, and category use `broadcast.*` keys, and payload values use `payload.*` keys. Keep Broadcast as the app-facing frontend; use swift-log as another destination unless the host project explicitly needs the reverse integration where swift-log call-sites enter Broadcast.
 
 For multi-session export, use `MultiSessionLogger` only after the host app configures its persistence store. Keep persistence setup in the host app layer and pass the configured store into the logger.
 

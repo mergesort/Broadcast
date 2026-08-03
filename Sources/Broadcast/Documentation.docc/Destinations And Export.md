@@ -10,6 +10,32 @@ Broadcast includes a few destinations out of the box:
 - ``SessionLogger`` buffers logs in memory for the current launch.
 - ``MultiSessionLogger`` persists logs across launches using a [Boutique](https://github.com/mergesort/boutique) `Store`.
 
+## Forward Records to swift-log
+
+Broadcast can forward records to [apple/swift-log](https://github.com/apple/swift-log) when the package is built with the `SwiftLogging` trait. Use this when Broadcast should stay as your app or server's call-site API, but records should also flow into the process's configured swift-log backend.
+
+```swift
+import Broadcast
+
+let log = Log(
+	destinations: [
+		SessionLogger(),
+		SwiftLogDestination(label: "com.example.app")
+	]
+)
+
+log.info(
+	.state,
+	"Synced links",
+	category: "Sync",
+	payload: [
+		.count(10)
+	]
+)
+```
+
+`SwiftLogDestination` maps Broadcast's `debug`, `info`, `warn`, `error`, and `fault` levels to swift-log's `debug`, `info`, `warning`, `error`, and `critical` levels. It forwards Broadcast's record identifier, timestamp, signal, and category with `broadcast.*` metadata keys, and payload values with `payload.*` metadata keys.
+
 ## Use Multiple Destinations
 
 Start by creating the destinations your app or package needs, then attach them to the same shared ``Log``. In an app or app-specific package, this is usually the same global `let log` you call from the rest of your code.

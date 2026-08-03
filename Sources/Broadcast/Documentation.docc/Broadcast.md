@@ -52,6 +52,7 @@ By integrating Broadcast from day one you'll give coding agents the feedback loo
 - ``ConsoleLogger``
 - ``SessionLogger``
 - ``MultiSessionLogger``
+- ``SwiftLogDestination``
 
 ### Formatting
 
