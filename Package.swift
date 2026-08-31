@@ -38,7 +38,7 @@ let package = Package(
 				.product(
 					name: "Boutique",
 					package: "Boutique",
-					condition: .when(platforms: [.iOS, .macOS], traits: ["MultiSessionLogging"])
+					condition: .when(platforms: [.iOS, .macOS, .macCatalyst], traits: ["MultiSessionLogging"])
 				),
 				.product(name: "Logging", package: "swift-log", condition: .when(traits: ["SwiftLogging"]))
 			]
@@ -49,7 +49,7 @@ let package = Package(
 				.product(
 					name: "Boutique",
 					package: "Boutique",
-					condition: .when(platforms: [.iOS, .macOS], traits: ["MultiSessionLogging"])
+					condition: .when(platforms: [.iOS, .macOS, .macCatalyst], traits: ["MultiSessionLogging"])
 				),
 				.product(name: "Logging", package: "swift-log", condition: .when(traits: ["SwiftLogging"])),
 				"Broadcast"
