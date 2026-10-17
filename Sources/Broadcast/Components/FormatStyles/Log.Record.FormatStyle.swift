@@ -4,9 +4,9 @@ public extension Log.Record {
 	/// Formats this record with a Swift `Foundation.FormatStyle`.
 	///
 	/// Use this for one-off formatting, assertions, or custom exports. To make a
-	/// ``LoggingDestination`` use a custom record format for every structured log,
+	/// ``BufferedLoggingDestination`` use a custom record format for text exports,
 	/// wrap the style in ``Log/Record/Formatter`` and return it from
-	/// ``LoggingDestination/recordFormatter``.
+	/// ``BufferedLoggingDestination/recordFormatter``.
 	func formatted<Style: Foundation.FormatStyle>(_ style: Style) -> Style.FormatOutput where Style.FormatInput == Self {
 		style.format(self)
 	}

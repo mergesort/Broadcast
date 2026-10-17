@@ -10,13 +10,6 @@ public protocol LoggingDestination {
 	/// Destinations can override this for deterministic tests or custom time sources.
 	var dateProvider: Log.DateProvider { get }
 
-	/// The formatter this destination uses when it renders records.
-	///
-	/// Custom destinations can override this with
-	/// `Log.Record.Formatter(.customRecordStyle)` to change how records are rendered
-	/// while preserving the same ergonomic ``Log`` call-sites.
-	var recordFormatter: Log.Record.Formatter { get }
-
 	/// Handles a canonical Broadcast log record.
 	func log(_ record: Log.Record)
 }
@@ -116,11 +109,6 @@ public extension LoggingDestination {
 public extension LoggingDestination {
 	/// The default date provider used when convenience methods create records.
 	var dateProvider: Log.DateProvider {
-		.default
-	}
-
-	/// The default formatter used when this destination renders records.
-	var recordFormatter: Log.Record.Formatter {
 		.default
 	}
 

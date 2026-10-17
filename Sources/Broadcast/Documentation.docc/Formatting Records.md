@@ -1,6 +1,6 @@
 # Formatting Records
 
-Broadcast treats ``Log/Record`` as the source of truth for logs, and asks destinations to format their logs.
+Broadcast treats ``Log/Record`` as the source of truth for logs. Destinations decide whether to store records, render them as text, or forward their fields to another logging system. Buffered destinations use ``BufferedLoggingDestination/recordFormatter`` for text exports.
 
 ## Format a record
 
@@ -122,10 +122,12 @@ let jsonLogs = records
 
 ## Configure a destination formatter
 
-Destinations expose a ``LoggingDestination/recordFormatter``. Wrap a format in ``Log/Record/Formatter`` when you want to store it on a destination.
+Buffered destinations expose a ``BufferedLoggingDestination/recordFormatter``. Wrap a format in ``Log/Record/Formatter`` when you want to store it on a destination.
 
 ```swift
 var recordFormatter: Log.Record.Formatter {
 	Log.Record.Formatter(.support)
 }
 ```
+
+``LoggingDestination`` does not supply a formatter. Write-only destinations that render text can declare their own formatter property, or call ``Log/Record/formatted(_:)`` directly.

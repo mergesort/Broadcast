@@ -148,7 +148,7 @@ let remoteLog = log.combined(with: uploadLogger)
 
 Since ``LoggingDestination/log(_:)`` is synchronous, hand asynchronous work off to your own queue, task, actor, or upload client.
 
-Override ``LoggingDestination/recordFormatter`` when a destination should always use a specific format.
+Buffered destinations can implement ``BufferedLoggingDestination/recordFormatter`` to customize text exports. Write-only destinations can declare their own formatter property when they render records as text, as in this example:
 
 ```swift
 final class AIDebuggingLoggingDestination: LoggingDestination {

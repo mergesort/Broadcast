@@ -3,8 +3,8 @@ import Foundation
 public extension Log.Record {
 	/// A type-erased formatter for ``Log/Record`` values.
 	///
-	/// ``LoggingDestination`` uses this concrete type for its
-	/// ``LoggingDestination/recordFormatter`` property so destinations can use any
+	/// ``BufferedLoggingDestination`` uses this concrete type for its
+	/// ``BufferedLoggingDestination/recordFormatter`` property so destinations can use any
 	/// custom record formatter without changing the structured logging call-site API.
 	///
 	/// Define a custom formatter by conforming to `Foundation.FormatStyle` with

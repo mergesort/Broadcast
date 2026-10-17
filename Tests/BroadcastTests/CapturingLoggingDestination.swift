@@ -1,6 +1,8 @@
 import Broadcast
 
 internal final class CapturingLoggingDestination: LoggingDestination {
+	let recordFormatter: Log.Record.Formatter = .default
+
 	private(set) var records: [Log.Record] = []
 	private(set) var debugLogs: [String] = []
 	private(set) var infoLogs: [String] = []

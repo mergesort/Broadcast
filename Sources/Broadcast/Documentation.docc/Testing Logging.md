@@ -67,6 +67,8 @@ Use a custom destination when a test needs to capture records for the purposes o
 
 ```swift
 final class CapturingLoggingDestination: LoggingDestination {
+	let recordFormatter: Log.Record.Formatter = .default
+
 	private(set) var records: [Log.Record] = []
 	private(set) var debugLogs: [String] = []
 	private(set) var infoLogs: [String] = []
@@ -144,7 +146,7 @@ let customOutput = record.formatted(.support)
 #expect(customOutput == "State/Sync/Synced links")
 ```
 
-When a destination overrides ``LoggingDestination/recordFormatter``, assert the destination received the formatted text you expect.
+When a custom destination renders records with its own formatter, assert the destination received the formatted text you expect. For buffered destinations, ``BufferedLoggingDestination/recordFormatter`` controls text exports.
 
 ```swift
 final class SupportLoggingDestination: LoggingDestination {

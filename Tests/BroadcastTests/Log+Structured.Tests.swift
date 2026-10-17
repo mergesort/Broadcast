@@ -339,21 +339,6 @@ struct StructuredLogTests {
 	}
 
 	@Test
-	func consoleLoggerUsesDefaultRecordFormatter() {
-		let logger = ConsoleLogger(subsystem: "com.mergesort.BroadcastTests", category: "logs")
-		let record = Log.Record(
-			timestamp: Log.Timestamp(Date(timeIntervalSince1970: 0)),
-			level: .warn,
-			signal: .event,
-			message: "Reached retry threshold",
-			category: "Notifications",
-			payload: [.init(key: "attempts", value: 3)]
-		)
-
-		#expect(logger.recordFormatter.format(record) == "[Warn | Event | Notifications] @ 1970-01-01T00:00:00Z | Reached retry threshold | payload=[attempts=3]")
-	}
-
-	@Test
 	func formatsRecordWithCustomFormatStyle() {
 		let record = Log.Record(
 			level: .info,

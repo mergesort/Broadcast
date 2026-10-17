@@ -5,6 +5,11 @@
 /// Destinations that only write elsewhere, such as the system console, should
 /// conform to ``LoggingDestination`` directly.
 public protocol BufferedLoggingDestination: LoggingDestination {
+	/// The formatter used when exporting buffered records as text.
+	///
+	/// Provide a custom formatter to change the output of `logs()` and `logs(count:)`.
+	var recordFormatter: Log.Record.Formatter { get }
+
 	/// Returns the original records currently buffered by this destination.
 	func records() -> [Log.Record]
 
@@ -13,6 +18,11 @@ public protocol BufferedLoggingDestination: LoggingDestination {
 }
 
 public extension BufferedLoggingDestination {
+	/// The default formatter used for buffered text exports.
+	var recordFormatter: Log.Record.Formatter {
+		.default
+	}
+
 	/// Returns the currently buffered records as readable export text.
 	func logs() -> String {
 		self.records()
