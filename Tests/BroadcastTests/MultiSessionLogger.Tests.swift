@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct MultiSessionLoggerTests {
 	@Test
-	func persistsLogsWithDefaultTimestampFormatStyle() async throws {
+	func formatsBufferedLogsWithDefaultTimestampFormatStyle() async throws {
 		let logger = try await Self.makeLogger(
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
 		)
@@ -19,7 +19,7 @@ struct MultiSessionLoggerTests {
 	}
 
 	@Test
-	func persistsLogsWithConfiguredTimestamp() async throws {
+	func formatsBufferedLogsWithConfiguredTimestamp() async throws {
 		let logger = try await Self.makeLogger(
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) },
 			timestampFormatStyle: .timestamp
@@ -32,40 +32,42 @@ struct MultiSessionLoggerTests {
 	}
 
 	@Test
-	func persistsMultipleValues() async throws {
+	func restoresStructuredRecords() async throws {
+		let directoryName = "BroadcastTests_\(UUID().uuidString)"
 		let logger = try await Self.makeLogger(
+			directoryName: directoryName,
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
 		)
 
-		logger.info("Created", "Reminder", 3)
+		let payload: [Log.Payload] = [
+			.init(key: "priority", value: "High"),
+			.init(key: "count", value: 3),
+			.init(key: "optionalDate", value: nil as Date?),
+			.init(key: "elapsed", duration: 1.25)
+		]
+		logger.info(.action, "Created reminder", category: "Reminders", payload: payload)
 		await logger.flush()
+		let restoredLogger = try await Self.makeLogger(directoryName: directoryName)
+		await restoredLogger.flush()
 
-		#expect(logger.logs() == "[Info] @ 1970-01-01T00:00:00Z | Created, Reminder, 3")
-	}
+		#expect(restoredLogger.records() == logger.records())
 
-	@Test
-	func exposesBufferedRecords() async throws {
-		let logger = try await Self.makeLogger(
-			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
-		)
+		let record = try #require(restoredLogger.records().first)
 
-		logger.info(.action, "Created reminder", category: "Reminders", payload: [.init(key: "priority", value: "High")])
-		await logger.flush()
-
-		let record = try #require(logger.records().first)
-
-		#expect(logger.records().count == 1)
+		#expect(restoredLogger.records().count == 1)
 		#expect(record.timestamp == Log.Timestamp(Date(timeIntervalSince1970: 0)))
 		#expect(record.level == .info)
 		#expect(record.signal == .action)
 		#expect(record.message == "Created reminder")
 		#expect(record.category == "Reminders")
-		#expect(record.payload == [.init(key: "priority", value: "High")])
+		#expect(record.payload == payload)
 	}
 
 	@Test
 	func persistsEveryLevel() async throws {
+		let directoryName = "BroadcastTests_\(UUID().uuidString)"
 		let logger = try await Self.makeLogger(
+			directoryName: directoryName,
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
 		)
 
@@ -75,7 +77,10 @@ struct MultiSessionLoggerTests {
 		logger.error("Failed reminder sync", 4)
 		logger.fault("Detected reminder store corruption", 5)
 		await logger.flush()
+		let restoredLogger = try await Self.makeLogger(directoryName: directoryName)
+		await restoredLogger.flush()
 
+		#expect(Dictionary(uniqueKeysWithValues: restoredLogger.records().map({ ($0.id, $0) })) == Dictionary(uniqueKeysWithValues: logger.records().map({ ($0.id, $0) })))
 		#expect(logger.logs() == """
 		[Debug] @ 1970-01-01T00:00:00Z | Read reminders, 1
 		[Info] @ 1970-01-01T00:00:00Z | Created reminder, 2
@@ -86,7 +91,7 @@ struct MultiSessionLoggerTests {
 	}
 
 	@Test
-	func waitsForQueuedWritesBeforeReadingLogs() async throws {
+	func preservesBufferedWriteOrder() async throws {
 		let dateProvider = SequentialDateProvider(
 			dates: [
 				Date(timeIntervalSince1970: 1),
@@ -134,16 +139,22 @@ struct MultiSessionLoggerTests {
 
 	@Test
 	func removesAllBufferedAndPersistedLogs() async throws {
-		let store = try await Store<Log.Record>(
-			storage: SQLiteStorageEngine(directory: .temporary(appendingPath: "BroadcastTests_\(UUID().uuidString)"))!
-		)
-		let logger = MultiSessionLogger(store: store)
+		let directoryName = "BroadcastTests_\(UUID().uuidString)"
+		let logger = try await Self.makeLogger(directoryName: directoryName)
 
 		logger.info("First")
 		logger.info("Second")
+		await logger.flush()
+
+		let persistedLogger = try await Self.makeLogger(directoryName: directoryName)
+		await persistedLogger.flush()
+		#expect(Dictionary(uniqueKeysWithValues: persistedLogger.records().map({ ($0.id, $0) })) == Dictionary(uniqueKeysWithValues: logger.records().map({ ($0.id, $0) })))
+		#expect(persistedLogger.records().count == 2)
+
+		logger.info("Third")
 		await logger.removeAll()
 
-		let restoredLogger = MultiSessionLogger(store: store)
+		let restoredLogger = try await Self.makeLogger(directoryName: directoryName)
 		await restoredLogger.flush()
 
 		#expect(logger.records().isEmpty)
@@ -155,9 +166,9 @@ struct MultiSessionLoggerTests {
 // MARK: Private
 
 private extension MultiSessionLoggerTests {
-	static func makeLogger(dateProvider: Log.DateProvider = .default, timestampFormatStyle: Log.Timestamp.FormatStyle = .default) async throws -> MultiSessionLogger {
+	static func makeLogger(directoryName: String = "BroadcastTests_\(UUID().uuidString)", dateProvider: Log.DateProvider = .default, timestampFormatStyle: Log.Timestamp.FormatStyle = .default) async throws -> MultiSessionLogger {
 		let store = try await Store<Log.Record>(
-			storage: SQLiteStorageEngine(directory: .temporary(appendingPath: "BroadcastTests_\(UUID().uuidString)"))!
+			storage: SQLiteStorageEngine(directory: .temporary(appendingPath: directoryName))!
 		)
 
 		return MultiSessionLogger(

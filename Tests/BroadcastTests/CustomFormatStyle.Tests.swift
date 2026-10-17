@@ -12,7 +12,6 @@ struct CustomFormatStyleTests {
 
 		#expect(defaultOutput == "priority=High")
 		#expect(customOutput == "<priority>")
-		#expect(customOutput != defaultOutput)
 	}
 
 	@Test
@@ -24,7 +23,6 @@ struct CustomFormatStyleTests {
 
 		#expect(defaultOutput == "1970-01-01T00:00:42Z")
 		#expect(customOutput == "seconds=42")
-		#expect(customOutput != defaultOutput)
 	}
 
 	@Test
@@ -43,7 +41,6 @@ struct CustomFormatStyleTests {
 
 		#expect(defaultOutput == "[Info | State | Reminders] @ 1970-01-01T00:00:42Z | Loaded reminders | payload=[count=3]")
 		#expect(customOutput == "State/Reminders/Loaded reminders/count=3")
-		#expect(customOutput != defaultOutput)
 	}
 
 	@Test
@@ -89,8 +86,6 @@ struct CustomFormatStyleTests {
 		#expect(customRecordOutput == "Metric/Sync: Measured reminder sync {<duration>, <count>}")
 		#expect(defaultTimestampOutput == "1970-01-01T00:00:42Z")
 		#expect(customTimestampOutput == "seconds=42")
-		#expect(customRecordOutput != defaultRecordOutput)
-		#expect(customTimestampOutput != defaultTimestampOutput)
 		#expect(destination.infoLogs == ["seconds=42 :: Metric/Sync: Measured reminder sync {<duration>, <count>}"])
 	}
 }

@@ -339,38 +339,6 @@ struct StructuredLogTests {
 	}
 
 	@Test
-	func formatsRecordWithCustomFormatStyle() {
-		let record = Log.Record(
-			level: .info,
-			signal: .state,
-			message: "Loaded reminders",
-			category: "Reminders",
-			payload: [
-				.init(key: "result", value: "Success")
-			]
-		)
-
-		#expect(record.formatted(.compactRecord) == "State/Reminders: Loaded reminders (result=Success)")
-	}
-
-	@Test
-	func formatsStructuredLogsWithCustomDestinationRecordFormatStyle() {
-		let destination = CustomRecordFormatLoggingDestination()
-		let log = Log(destinations: [destination])
-
-		log.info(
-			.state,
-			"Loaded reminders",
-			category: "Reminders",
-			payload: [
-				.init(key: "result", value: "Success")
-			]
-		)
-
-		#expect(destination.infoLogs == ["State/Reminders: Loaded reminders (result=Success)"])
-	}
-
-	@Test
 	func formatsStructuredLogsWithClosureBasedRecordFormatStyle() {
 		let style = Log.Record.Formatter { record in
 			[
@@ -448,7 +416,8 @@ struct StructuredLogTests {
 			"Loaded reminders",
 			category: "Reminders",
 			payload: [
-				.init(key: "result", value: "Success")
+				.init(key: "result", value: "Success"),
+				.init(key: "count", value: 3)
 			]
 		)
 
@@ -459,8 +428,7 @@ struct StructuredLogTests {
 		#expect(record.signal == .state)
 		#expect(record.message == "Loaded reminders")
 		#expect(record.category == "Reminders")
-		#expect(record.payload == [.init(key: "result", value: "Success")])
-		#expect(destination.infoLogs.isEmpty)
+		#expect(record.payload == [.init(key: "result", value: "Success"), .init(key: "count", value: 3)])
 	}
 
 	@Test
@@ -470,30 +438,6 @@ struct StructuredLogTests {
 		#expect(Log.Payload(key: "id", value: id).formatted(.logPayload) == "id=00000000-0000-4000-8000-000000000001")
 		#expect(Log.Payload(key: "error message", value: "Path C:\\Logs was missing").formatted(.logPayload) == "error message=Path C:\\Logs was missing")
 		#expect(Log.Payload.Value.bool(true).formatted(.logPayloadValue) == "true")
-	}
-
-	@Test
-	func formatsStructuredLogsWithPayload() {
-		let destination = CapturingLoggingDestination()
-		let log = Log(destinations: [destination])
-
-		log.info(
-			.action,
-			"Updated reminder priority",
-			category: "Reminders",
-			payload: [
-				.init(key: "result", value: "Success"),
-				.init(key: "title", value: "Buy milk"),
-				.init(key: "priority", value: "High")
-			]
-		)
-
-		expectStructuredLog(
-			destination.infoLogs.first,
-			prefix: "[Info | Action | Reminders] @ ",
-			suffix: " | Updated reminder priority | payload=[result=Success, title=Buy milk, priority=High]"
-		)
-		#expect(destination.infoLogs.count == 1)
 	}
 
 	@Test
@@ -507,30 +451,6 @@ struct StructuredLogTests {
 			destination.infoLogs.first,
 			prefix: "[Info | Action | Sync] @ ",
 			suffix: " | Started reminder sync"
-		)
-		#expect(destination.infoLogs.count == 1)
-	}
-
-	@Test
-	func preservesPayloadOrder() {
-		let destination = CapturingLoggingDestination()
-		let log = Log(destinations: [destination])
-
-		log.info(
-			.action,
-			"Created reminder",
-			category: "Reminders",
-			payload: [
-				.init(key: "title", value: "Buy milk"),
-				.init(key: "priority", value: "High"),
-				.init(key: "dueDate", value: "Tomorrow")
-			]
-		)
-
-		expectStructuredLog(
-			destination.infoLogs.first,
-			prefix: "[Info | Action | Reminders] @ ",
-			suffix: " | Created reminder | payload=[title=Buy milk, priority=High, dueDate=Tomorrow]"
 		)
 		#expect(destination.infoLogs.count == 1)
 	}
@@ -595,20 +515,20 @@ struct StructuredLogTests {
 		let date = try Date.ISO8601FormatStyle().parse("2026-05-23T12:00:00Z")
 		let error = NSError(domain: "BroadcastTests", code: 42, userInfo: [NSLocalizedDescriptionKey: "Something failed"])
 
-		#expect(Log.Payload.string("string", "hello").value == .string("hello"))
-		#expect(Log.Payload.string("optionalString", nil).value == .string(nil))
-		#expect(Log.Payload.bool("bool", true).value == .bool(true))
-		#expect(Log.Payload.int("int", 42).value == .int(42))
-		#expect(Log.Payload.uuid("uuid", id).value == .uuid(id))
-		#expect(Log.Payload.uuid("optionalUUID", nil).value == .uuid(nil))
-		#expect(Log.Payload.url("url", url).value == .url(url))
-		#expect(Log.Payload.url("optionalURL", nil).value == .url(nil))
-		#expect(Log.Payload.date("date", date).value == .date(date))
-		#expect(Log.Payload.date("optionalDate", nil).value == .date(nil))
-		#expect(Log.Payload.error("failure", error).value == .error("Something failed"))
+		#expect(Log.Payload.string("string", "hello") == .init(key: "string", value: .string("hello")))
+		#expect(Log.Payload.string("optionalString", nil) == .init(key: "optionalString", value: .string(nil)))
+		#expect(Log.Payload.bool("bool", true) == .init(key: "bool", value: .bool(true)))
+		#expect(Log.Payload.int("int", 42) == .init(key: "int", value: .int(42)))
+		#expect(Log.Payload.uuid("uuid", id) == .init(key: "uuid", value: .uuid(id)))
+		#expect(Log.Payload.uuid("optionalUUID", nil) == .init(key: "optionalUUID", value: .uuid(nil)))
+		#expect(Log.Payload.url("url", url) == .init(key: "url", value: .url(url)))
+		#expect(Log.Payload.url("optionalURL", nil) == .init(key: "optionalURL", value: .url(nil)))
+		#expect(Log.Payload.date("date", date) == .init(key: "date", value: .date(date)))
+		#expect(Log.Payload.date("optionalDate", nil) == .init(key: "optionalDate", value: .date(nil)))
+		#expect(Log.Payload.error("failure", error) == .init(key: "failure", value: .error("Something failed")))
 		#expect(Log.Payload.error(error).key == "error")
 		#expect(Log.Payload.error(error).value == .error("Something failed"))
-		#expect(Log.Payload.duration("elapsed", seconds: 1.234).value == .duration(1.234))
+		#expect(Log.Payload.duration("elapsed", seconds: 1.234) == .init(key: "elapsed", value: .duration(1.234)))
 		#expect(Log.Payload.duration(seconds: 1.234).key == "duration")
 		#expect(Log.Payload.duration(seconds: 1.234).value == .duration(1.234))
 		#expect(Log.Payload.count(10) == .init(key: "count", value: 10))
@@ -649,30 +569,7 @@ struct StructuredLogTests {
 		expectStructuredLog(
 			destination.infoLogs.first,
 			prefix: "[Info | Metric | Reminders] @ ",
-			suffix: " | Measured reminder payload formatting | payload=[string=hello, optionalString=nil, bool=true, int=42, uuid=00000000-0000-4000-8000-000000000001, optionalUUID=nil, url=https://example.com/reminders/1, optionalURL=nil, date=\(date.formatted(.iso8601)), optionalDate=nil, error=Something failed, duration=1.23s]"
-		)
-		#expect(destination.infoLogs.count == 1)
-	}
-
-	@Test
-	func formatsDatePayloadWithDefaultTimestampFormat() {
-		let destination = CapturingLoggingDestination()
-		let log = Log(destinations: [destination])
-		let date = Date(timeIntervalSince1970: 0)
-
-		log.info(
-			.metric,
-			"Measured reminder timestamp",
-			category: "Reminders",
-			payload: [
-				.init(key: "timestamp", value: date)
-			]
-		)
-
-		expectStructuredLog(
-			destination.infoLogs.first,
-			prefix: "[Info | Metric | Reminders] @ ",
-			suffix: " | Measured reminder timestamp | payload=[timestamp=1970-01-01T00:00:00Z]"
+			suffix: " | Measured reminder payload formatting | payload=[string=hello, optionalString=nil, bool=true, int=42, uuid=00000000-0000-4000-8000-000000000001, optionalUUID=nil, url=https://example.com/reminders/1, optionalURL=nil, date=2026-05-23T12:00:00Z, optionalDate=nil, error=Something failed, duration=1.23s]"
 		)
 		#expect(destination.infoLogs.count == 1)
 	}
@@ -691,21 +588,6 @@ struct StructuredLogTests {
 			destination.infoLogs.first,
 			prefix: "[Info | Audit | Reminders] @ ",
 			suffix: " | Verified reminder access | payload=[actor=system]"
-		)
-		#expect(destination.infoLogs.count == 1)
-	}
-
-	@Test
-	func formatsMetricSignal() {
-		let destination = CapturingLoggingDestination()
-		let log = Log(destinations: [destination])
-
-		log.info(.metric, "Measured reminder sync duration", category: "Sync", payload: [.init(key: "duration", value: "0.50s")])
-
-		expectStructuredLog(
-			destination.infoLogs.first,
-			prefix: "[Info | Metric | Sync] @ ",
-			suffix: " | Measured reminder sync duration | payload=[duration=0.50s]"
 		)
 		#expect(destination.infoLogs.count == 1)
 	}
@@ -732,59 +614,11 @@ private func parsedPayload(from json: [String: Any]) throws -> [String: Any] {
 // MARK: CapturingStructuredLoggingDestination
 
 private final class CapturingStructuredLoggingDestination: LoggingDestination {
-	private(set) var infoLogs: [String] = []
 	private(set) var receivedRecords: [Log.Record] = []
 
 	func log(_ record: Log.Record) {
 		if case .info = record.level {
 			self.receivedRecords.append(record)
 		}
-	}
-}
-
-// MARK: CustomRecordFormatLoggingDestination
-
-private final class CustomRecordFormatLoggingDestination: LoggingDestination {
-	private(set) var infoLogs: [String] = []
-
-	var recordFormatter: Log.Record.Formatter {
-		Log.Record.Formatter(.compactRecord)
-	}
-
-	func log(_ record: Log.Record) {
-		if case .info = record.level {
-			self.infoLogs.append(self.recordFormatter.format(record))
-		}
-	}
-}
-
-// MARK: CompactRecordFormatStyle
-
-private struct CompactRecordFormatStyle: FormatStyle, Sendable {
-	func format(_ value: Log.Record) -> String {
-		var text = [
-			value.signal?.identifier,
-			value.category?.identifier
-		]
-		.compactMap({ $0 })
-		.joined(separator: "/")
-
-		if !text.isEmpty {
-			text += ": "
-		}
-
-		text += value.message
-
-		if !value.payload.isEmpty {
-			text += " (\(value.payload.map({ $0.formatted(.logPayload) }).joined(separator: ", ")))"
-		}
-
-		return text
-	}
-}
-
-private extension FormatStyle where Self == CompactRecordFormatStyle {
-	static var compactRecord: Self {
-		Self()
 	}
 }

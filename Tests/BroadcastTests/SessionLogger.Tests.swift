@@ -114,18 +114,6 @@ struct SessionLoggerTests {
 	}
 
 	@Test
-	func supportsCustomTimestampFormatting() {
-		let logger = SessionLogger(
-			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 42) },
-			timestampFormatStyle: .timestamp
-		)
-
-		logger.warn("Reached reminder threshold")
-
-		#expect(logger.logs() == "[Warn] @ 42 | Reached reminder threshold")
-	}
-
-	@Test
 	func preservesBlankLines() {
 		let logger = SessionLogger(
 			dateProvider: Log.DateProvider { Date(timeIntervalSince1970: 0) }
