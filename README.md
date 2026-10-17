@@ -17,6 +17,7 @@ By integrating Broadcast from day one you'll give coding agents the feedback loo
 - [Getting Started](#getting-started)
 - [Structured Logs](#structured-logs)
 - [Destinations](#destinations)
+- [swift-log](#swift-log)
 - [Formatting](#formatting)
 - [Documentation](#documentation)
 - [Coding Agent Plugins](#coding-agent-plugins)
@@ -49,6 +50,9 @@ log.debug("Synced", 10, "links")
 ```
 
 That's it. You now have one API that writes to the console and keeps an in-memory support log you can export later.
+
+`ConsoleLogger` uses Apple's unified logging system. On Linux, enable the
+`SwiftLogging` package trait and use `SwiftLogDestination` for process output.
 
 ```swift
 let supportLogs = sessionLogger.logs()
@@ -119,9 +123,9 @@ log.info(
 
 Broadcast includes a few destinations out of the box:
 
-- `ConsoleLogger` writes to Apple's unified logging system.
+- `ConsoleLogger` writes to Apple's unified logging system on Apple platforms.
 - `SessionLogger` buffers logs in memory for the current launch.
-- `MultiSessionLogger` buffers logs across launches using a [Boutique](https://github.com/mergesort/boutique) `Store`.
+- `MultiSessionLogger` buffers logs across launches when the `MultiSessionLogging` package trait is enabled. It currently uses a [Boutique](https://github.com/mergesort/boutique) `Store` on Apple platforms.
 
 Destinations are composable, so one call-site can power multiple debugging workflows.
 
@@ -172,6 +176,32 @@ final class UploadLoggingDestination: LoggingDestination {
 	}
 }
 ```
+
+## swift-log
+
+Broadcast can forward records to [apple/swift-log](https://github.com/apple/swift-log) when you enable the `SwiftLogging` package trait. This lets Broadcast stay as the call-site API while a server or app still writes to whatever swift-log backend it has configured.
+
+```swift
+import Broadcast
+
+let log = Log(
+	destinations: [
+		SessionLogger(),
+		SwiftLogDestination(label: "com.example.app")
+	]
+)
+
+log.info(
+	.state,
+	"Synced links",
+	category: "Sync",
+	payload: [
+		.count(10)
+	]
+)
+```
+
+`SwiftLogDestination` maps Broadcast levels to swift-log levels and forwards record details as metadata. Broadcast's record identifier, timestamp, signal, and category use `broadcast.*` keys, and payload values use `payload.*` keys.
 
 ## Formatting
 
@@ -312,7 +342,8 @@ codex plugin marketplace add mergesort/Broadcast
 
 - iOS 18.0+
 - macOS 15.0+
-- Xcode 16+
+- Linux with Swift 6.1+
+- Xcode 16.3+
 
 ## Installation
 
@@ -323,6 +354,30 @@ Add Broadcast to your package dependencies:
 ```swift
 dependencies: [
 .package(url: "https://github.com/mergesort/Broadcast", from: Version(1, 0, 0))
+]
+```
+
+To enable the swift-log destination without Broadcast's default multi-session persistence support, enable only the `SwiftLogging` trait:
+
+```swift
+dependencies: [
+	.package(
+		url: "https://github.com/mergesort/Broadcast",
+		from: Version(1, 0, 0),
+		traits: ["SwiftLogging"]
+	)
+]
+```
+
+When you specify dependency traits, Swift Package Manager does not automatically include a package's default traits. Apple apps that need both destinations can enable the defaults alongside `SwiftLogging`:
+
+```swift
+dependencies: [
+	.package(
+		url: "https://github.com/mergesort/Broadcast",
+		from: Version(1, 0, 0),
+		traits: [.defaults, "SwiftLogging"]
+	)
 ]
 ```
 

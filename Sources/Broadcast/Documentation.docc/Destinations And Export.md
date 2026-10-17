@@ -6,9 +6,38 @@ Destinations are what make Broadcast composable. One call to `log.info` can writ
 
 Broadcast includes a few destinations out of the box:
 
-- ``ConsoleLogger`` writes to Apple's unified logging system.
+- ``ConsoleLogger`` writes to Apple's unified logging system on Apple platforms.
 - ``SessionLogger`` buffers logs in memory for the current launch.
-- ``MultiSessionLogger`` persists logs across launches using a [Boutique](https://github.com/mergesort/boutique) `Store`.
+- ``MultiSessionLogger`` persists logs across launches when the `MultiSessionLogging` package trait is enabled. It currently uses a [Boutique](https://github.com/mergesort/boutique) `Store` on Apple platforms.
+
+On Linux, enable the `SwiftLogging` package trait and use ``SwiftLogDestination``
+for process output instead of ``ConsoleLogger``.
+
+## Forward Records to swift-log
+
+Broadcast can forward records to [apple/swift-log](https://github.com/apple/swift-log) when the package is built with the `SwiftLogging` trait. Use this when Broadcast should stay as your app or server's call-site API, but records should also flow into the process's configured swift-log backend.
+
+```swift
+import Broadcast
+
+let log = Log(
+	destinations: [
+		SessionLogger(),
+		SwiftLogDestination(label: "com.example.app")
+	]
+)
+
+log.info(
+	.state,
+	"Synced links",
+	category: "Sync",
+	payload: [
+		.count(10)
+	]
+)
+```
+
+`SwiftLogDestination` maps Broadcast's `debug`, `info`, `warn`, `error`, and `fault` levels to swift-log's `debug`, `info`, `warning`, `error`, and `critical` levels. It forwards Broadcast's record identifier, timestamp, signal, and category with `broadcast.*` metadata keys, and payload values with `payload.*` metadata keys.
 
 ## Console Privacy
 
@@ -64,6 +93,8 @@ Use `logs()` when you want readable text for support screens or bug report attac
 ## Persist Logs Across Launches
 
 ``MultiSessionLogger`` buffers logs across launches using a Boutique `Store`.
+The `MultiSessionLogging` package trait enables this API and is part of Broadcast's
+default traits, so existing Apple integrations receive it automatically.
 
 ```swift
 import Broadcast

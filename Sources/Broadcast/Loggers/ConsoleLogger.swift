@@ -1,3 +1,4 @@
+#if canImport(OSLog)
 import OSLog
 
 /// A destination that writes Broadcast logs to Apple's unified logging system.
@@ -89,3 +90,4 @@ private extension Log.Level {
 		}
 	}
 }
+#endif

@@ -1,3 +1,4 @@
+#if MultiSessionLogging && canImport(Boutique)
 import Boutique
 import Foundation
 import Synchronization
@@ -137,3 +138,4 @@ private final class MultiSessionLogStorage {
 		try? await self.$records.removeAll()
 	}
 }
+#endif
