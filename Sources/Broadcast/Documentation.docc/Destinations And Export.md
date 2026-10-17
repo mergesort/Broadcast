@@ -10,6 +10,18 @@ Broadcast includes a few destinations out of the box:
 - ``SessionLogger`` buffers logs in memory for the current launch.
 - ``MultiSessionLogger`` persists logs across launches using a [Boutique](https://github.com/mergesort/boutique) `Store`.
 
+## Console Privacy
+
+``ConsoleLogger`` provides an OSLog compatible privacy parameter. The default publicity is public, but you can choose private privacy to make the signal, record category, message, and payload private in Apple's unified logging system:
+
+```swift
+let consoleLogger = ConsoleLogger(
+	subsystem: "com.example.app",
+	category: "logs",
+	privacy: .private
+)
+```
+
 ## Use Multiple Destinations
 
 Start by creating the destinations your app or package needs, then attach them to the same shared ``Log``. In an app or app-specific package, this is usually the same global `let log` you call from the rest of your code.
