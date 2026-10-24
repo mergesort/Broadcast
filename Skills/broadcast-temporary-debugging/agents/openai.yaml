@@ -1,0 +1,4 @@
+interface:
+  display_name: "Temporary Debugging with Broadcast"
+  short_description: "Temporary Broadcast tracing for iOS or macOS bugs"
+  default_prompt: "Use $broadcast-temporary-debugging to diagnose this iOS or macOS issue with temporary Broadcast tracing, verify the fix on device, and remove Broadcast afterward."
